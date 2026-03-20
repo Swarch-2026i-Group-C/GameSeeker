@@ -1,0 +1,11 @@
+model Wishlist {
+  id        String   @id @default(uuid())
+  userId    String
+  gameName  String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("wishlist")
+}

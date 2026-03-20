@@ -29,3 +29,7 @@ lerna-debug.log*
 
 #prisma generated
 /src/generated/prisma
+
+# Tests requests http
+/requests.http
+

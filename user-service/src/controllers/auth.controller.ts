@@ -6,7 +6,18 @@ export const authController = {
     try {
       const body = await c.req.json();
       const newUser = await authService.registerUser(body);
-      return c.json({ success: true, data: newUser }, 201);
+      return c.json(
+        {
+          success: true,
+          data: {
+            ...newUser,
+            image: newUser.image ?? null,
+            createdAt: newUser.createdAt.toISOString(),
+            updatedAt: newUser.updatedAt.toISOString(),
+          },
+        },
+        201,
+      );
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "SignUp failed";
       return c.json({ success: false, message }, 400);
@@ -22,7 +33,15 @@ export const authController = {
         {
           success: true,
           message: "Logged in successfully",
-          data: sessionData,
+          data: {
+            ...sessionData,
+            user: {
+              ...sessionData.user,
+              image: sessionData.user.image ?? null,
+              createdAt: sessionData.user.createdAt.toISOString(),
+              updatedAt: sessionData.user.updatedAt.toISOString(),
+            },
+          },
         },
         200,
       );

@@ -29,7 +29,10 @@ export const wishlistController = {
 
       if (!userId || !gameId || !gameName) {
         return c.json(
-          { success: false, message: "userId, gameId, and gameName are required" },
+          {
+            success: false,
+            message: "userId, gameId, and gameName are required",
+          },
           400,
         );
       }
@@ -50,7 +53,10 @@ export const wishlistController = {
         return c.json({ success: false, message: "id is required" }, 400);
       }
       await wishlistService.deleteGame(id);
-      return c.json({ success: true, message: "Game deleted successfully" }, 200);
+      return c.json(
+        { success: true, message: "Game deleted successfully" },
+        200,
+      );
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Error deleting game";

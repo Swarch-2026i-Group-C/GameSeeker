@@ -1,23 +1,13 @@
+import type { z } from "zod";
 import { auth } from "../lib/better-auth.js";
+import { LoginSchema, SignupSchema } from "../schemas/auth.schema.js";
 
-interface RegisterInput {
-  email: string;
-  password: string;
-  name: string;
-}
-
-interface LoginInput {
-  email: string;
-  password: string;
-}
+type RegisterInput = z.infer<typeof SignupSchema>;
+type LoginInput = z.infer<typeof LoginSchema>;
 
 export const authService = {
-  async registerUser(data: RegisterInput) {
-    const { email, password, name } = data;
-
-    if (!email || !password || !name) {
-      throw new Error("Missing required fields");
-    }
+  async registerUser(data: unknown) {
+    const { email, password, name }: RegisterInput = SignupSchema.parse(data);
 
     const response = await auth.api.signUpEmail({
       body: {
@@ -34,12 +24,8 @@ export const authService = {
     return response.user;
   },
 
-  async loginUser(data: LoginInput) {
-    const { email, password } = data;
-
-    if (!email || !password) {
-      throw new Error("Email and password are required");
-    }
+  async loginUser(data: unknown) {
+    const { email, password }: LoginInput = LoginSchema.parse(data);
 
     const response = await auth.api.signInEmail({
       body: {

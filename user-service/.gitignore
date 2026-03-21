@@ -27,9 +27,11 @@ lerna-debug.log*
 # misc
 .DS_Store
 
-#prisma generated
+# prisma generated
 /src/generated/prisma
+
+# build output
+dist/
 
 # Tests requests http
 /requests.http
-

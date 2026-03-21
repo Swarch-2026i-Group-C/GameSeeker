@@ -1,21 +1,39 @@
 import prisma from "../lib/prisma.js";
 
 export const wishlistRepository = {
-  findByUserId(userId: string) {
-    return prisma.wishlist.findMany({
+  // Returns the user's single Wishlist with all Games nested inside
+  async findByUserId(userId: string) {
+    return prisma.wishlist.findUnique({
       where: { userId },
-      orderBy: { createdAt: "desc" },
+      include: {
+        games: {
+          orderBy: { addedAt: "desc" },
+        },
+      },
     });
   },
 
-  create(userId: string, gameName: string) {
-    return prisma.wishlist.create({
-      data: { userId, gameName },
+  // Creates the Wishlist if it doesn't exist yet, then adds the Game to it
+  async addGame(userId: string, gameId: string, gameName: string) {
+    // upsert guarantees there is always exactly one Wishlist per user
+    await prisma.wishlist.upsert({
+      where: { userId },
+      create: { userId },
+      update: {},
+    });
+
+    return prisma.game.create({
+      data: {
+        wishlistId: userId, // wishlist PK is userId
+        gameId,
+        gameName,
+      },
     });
   },
 
-  deleteById(id: string) {
-    return prisma.wishlist.delete({
+  // Deletes a specific Game entry by its own id
+  deleteGameById(id: string) {
+    return prisma.game.delete({
       where: { id },
     });
   },

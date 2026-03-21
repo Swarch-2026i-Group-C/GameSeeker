@@ -21,19 +21,20 @@ export const wishlistController = {
   async addGame(c: Context) {
     try {
       const body = await c.req.json();
-      const { userId, gameName } = body as {
+      const { userId, gameId, gameName } = body as {
         userId?: string;
+        gameId?: string;
         gameName?: string;
       };
 
-      if (!userId || !gameName) {
+      if (!userId || !gameId || !gameName) {
         return c.json(
-          { success: false, message: "userId and gameName are required" },
+          { success: false, message: "userId, gameId, and gameName are required" },
           400,
         );
       }
 
-      const item = await wishlistService.addGame(userId, gameName);
+      const item = await wishlistService.addGame(userId, gameId, gameName);
       return c.json({ success: true, data: item }, 201);
     } catch (error: unknown) {
       const message =

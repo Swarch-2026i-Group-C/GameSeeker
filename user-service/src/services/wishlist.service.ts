@@ -5,11 +5,11 @@ export const wishlistService = {
     return wishlistRepository.findByUserId(userId);
   },
 
-  addGame(userId: string, gameName: string) {
-    return wishlistRepository.create(userId, gameName);
+  addGame(userId: string, gameId: string, gameName: string) {
+    return wishlistRepository.addGame(userId, gameId, gameName);
   },
 
   deleteGame(id: string) {
-    return wishlistRepository.deleteById(id);
+    return wishlistRepository.deleteGameById(id);
   },
 };

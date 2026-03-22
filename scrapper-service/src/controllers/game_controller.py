@@ -3,7 +3,7 @@ import logging
 from services.game_service import GameService
 
 logger = logging.getLogger(__name__)
-game_bp = Blueprint('game', __name__)
+game_bp = Blueprint('game', __name__, url_prefix='/api/v1/games')
 game_service = GameService()
 
 @game_bp.route("/", methods=["GET"])
@@ -19,7 +19,7 @@ def health():
     """Health check endpoint for the API Gateway."""
     return jsonify({"status": "healthy", "service": "game-scraper"}), 200
 
-@game_bp.route("/api/v1/games/search", methods=["GET"])
+@game_bp.route("/search", methods=["GET"])
 def search_game():
     """Search for a game across all stores."""
     game_name = request.args.get("name")
@@ -41,7 +41,7 @@ def search_game():
         "results": results,
     }), 200
 
-@game_bp.route("/api/v1/games/compare", methods=["GET"])
+@game_bp.route("/compare", methods=["GET"])
 def compare_game():
     """Compare prices for a game across all stores."""
     game_name = request.args.get("name")
@@ -65,7 +65,7 @@ def compare_game():
         "cheapest": comparison.get("cheapest"),
     }), 200
 
-@game_bp.route("/api/v1/games/compare/bulk", methods=["POST"])
+@game_bp.route("/compare/bulk", methods=["POST"])
 def compare_bulk():
     """Compare prices for multiple games across all stores."""
     data = request.get_json()
@@ -93,7 +93,7 @@ def compare_bulk():
 
     return jsonify({"comparisons": response}), 200
 
-@game_bp.route("/api/v1/games/search/<store>", methods=["GET"])
+@game_bp.route("/search/<store>", methods=["GET"])
 def search_store(store):
     """Search for a game on a specific store."""
     game_name = request.args.get("name")
@@ -115,7 +115,7 @@ def search_store(store):
         logger.error(f"Error searching {store}: {e}")
         return jsonify({"error": "An internal error occurred"}), 500
 
-@game_bp.route("/api/v1/games/trending/<store>", methods=["GET"])
+@game_bp.route("/trending/<store>", methods=["GET"])
 def trending_games(store):
     """Get trending/featured games from a specific store."""
     try:

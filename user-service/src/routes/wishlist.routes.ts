@@ -1,10 +1,11 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { wishlistController } from "../controllers/wishlist.controller.js";
-import { ErrorResponse, SuccessResponse } from "../schemas/common.schema.js";
 import {
   AddGameSchema,
-  GameSchema,
-  WishlistSchema,
+  AddGameSuccess,
+  DeleteGameSuccess,
+  ErrorResponse,
+  GetWishlistSuccess,
 } from "../schemas/wishlist.schema.js";
 
 const wishlistRoutes = new OpenAPIHono();
@@ -21,15 +22,15 @@ const getWishlistRoute = createRoute({
   },
   responses: {
     200: {
-      description: "Wishlist fetched",
+      description: "Wishlist fetched successfully",
       content: {
         "application/json": {
-          schema: SuccessResponse(WishlistSchema.nullable()),
+          schema: GetWishlistSuccess,
         },
       },
     },
     400: {
-      description: "Missing userId",
+      description: "Missing required query parameter: userId",
       content: {
         "application/json": {
           schema: ErrorResponse,
@@ -56,6 +57,8 @@ const addGameRoute = createRoute({
   path: "/",
   tags: ["Wishlist"],
   summary: "Add game to wishlist",
+  description:
+    "Creates the wishlist automatically if the user does not have one yet. Adds the game to the existing wishlist otherwise.",
   request: {
     body: {
       content: {
@@ -67,15 +70,16 @@ const addGameRoute = createRoute({
   },
   responses: {
     201: {
-      description: "Game added",
+      description: "Game added successfully",
       content: {
         "application/json": {
-          schema: SuccessResponse(GameSchema),
+          schema: AddGameSuccess,
         },
       },
     },
     400: {
-      description: "Invalid input",
+      description:
+        "Missing or invalid required fields: userId, gameId, gameName",
       content: {
         "application/json": {
           schema: ErrorResponse,
@@ -83,7 +87,7 @@ const addGameRoute = createRoute({
       },
     },
     500: {
-      description: "Server error",
+      description: "Internal server error",
       content: {
         "application/json": {
           schema: ErrorResponse,
@@ -99,7 +103,8 @@ const deleteGameRoute = createRoute({
   method: "delete",
   path: "/{id}",
   tags: ["Wishlist"],
-  summary: "Delete game",
+  summary: "Remove game from wishlist",
+  description: "Deletes a specific game entry by its internal UUID",
   request: {
     params: z.object({
       id: z.string(),
@@ -107,18 +112,15 @@ const deleteGameRoute = createRoute({
   },
   responses: {
     200: {
-      description: "Game deleted",
+      description: "Game removed from wishlist successfully",
       content: {
         "application/json": {
-          schema: z.object({
-            success: z.literal(true),
-            message: z.string(),
-          }),
+          schema: DeleteGameSuccess,
         },
       },
     },
     400: {
-      description: "Missing id",
+      description: "Missing required path parameter: id",
       content: {
         "application/json": {
           schema: ErrorResponse,

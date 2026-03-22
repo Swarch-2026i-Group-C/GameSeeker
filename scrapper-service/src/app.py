@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 def create_app():
     """Application factory for the Scrapper Service."""
-
+    app = Flask(__name__)
     app.register_blueprint(game_bp)
     
     logger.info("Scrapper Service initialized with Layered Architecture")

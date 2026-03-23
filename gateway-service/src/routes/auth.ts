@@ -4,11 +4,24 @@ import { proxyRequest } from "../lib/proxy.js";
 
 const auth = new Hono();
 
+// Map better-auth client native paths to the user-service custom routes
+auth.post("/sign-up/email", (c) =>
+  proxyRequest(`${env.USER_SERVICE_URL}/auth/signup`, c),
+);
+
+auth.post("/sign-in/email", (c) =>
+  proxyRequest(`${env.USER_SERVICE_URL}/auth/login`, c),
+);
+
+auth.post("/sign-out", (c) =>
+  proxyRequest(`${env.USER_SERVICE_URL}/auth/sign-out`, c),
+);
+
 /**
  * Wildcard proxy: /api/auth/* → user-service /auth/*
  *
- * Covers all better-auth native routes (e.g. /sign-up/email, /sign-in/email,
- * /sign-out, /session) as well as any custom routes on the auth router.
+ * Covers remaining better-auth native routes (/session, /sign-out, etc.)
+ * as well as any custom routes on the auth router.
  * No auth guard — the auth service handles its own validation.
  */
 auth.all("/*", async (c) => {

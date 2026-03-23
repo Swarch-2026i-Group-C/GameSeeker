@@ -4,8 +4,8 @@ FROM base AS builder
 RUN apk add --no-cache gcompat
 WORKDIR /app
 
-COPY package*json tsconfig.json ./
-COPY prisma ./prisma/ 
+COPY package*json tsconfig.json prisma.config.ts ./
+COPY prisma ./prisma/
 
 RUN npm ci
 RUN npx prisma generate
@@ -32,4 +32,4 @@ COPY --from=builder --chown=hono:nodejs /app/package.json /app/package.json
 
 USER hono
 EXPOSE 3000
-CMD ["node", "/app/dist/app.js"]
+CMD ["node", "/app/dist/src/app.js"]

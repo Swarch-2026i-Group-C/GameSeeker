@@ -25,7 +25,12 @@ app.get(
   }),
 );
 
-serve({
-  fetch: app.fetch,
-  port: 3000,
-});
+export default app;
+
+// Only start the HTTP server when this file is run directly (not imported by tests)
+if (process.env["VITEST"] === undefined) {
+  serve({
+    fetch: app.fetch,
+    port: 3000,
+  });
+}

@@ -1,0 +1,23 @@
+import { Hono } from "hono";
+import { env } from "../lib/env.js";
+import { proxyRequest } from "../lib/proxy.js";
+
+const auth = new Hono();
+
+/**
+ * Wildcard proxy: /api/auth/* → user-service /auth/*
+ *
+ * Covers all better-auth native routes (e.g. /sign-up/email, /sign-in/email,
+ * /sign-out, /session) as well as any custom routes on the auth router.
+ * No auth guard — the auth service handles its own validation.
+ */
+auth.all("/*", async (c) => {
+  const path = c.req.path.replace(/^\/api\/auth/, "/auth");
+  const queryString = c.req.url.includes("?")
+    ? c.req.url.slice(c.req.url.indexOf("?"))
+    : "";
+  const upstream = `${env.USER_SERVICE_URL}${path}${queryString}`;
+  return proxyRequest(upstream, c);
+});
+
+export default auth;

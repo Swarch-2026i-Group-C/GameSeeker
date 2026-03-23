@@ -22,6 +22,7 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 hono
 
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./
 
 COPY --from=builder /app/src/generated/prisma /app/dist/generated/prisma
 
@@ -32,4 +33,4 @@ COPY --from=builder --chown=hono:nodejs /app/package.json /app/package.json
 
 USER hono
 EXPOSE 3000
-CMD ["node", "/app/dist/src/app.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node /app/dist/src/app.js"]

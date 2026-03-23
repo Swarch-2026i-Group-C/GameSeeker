@@ -17,6 +17,7 @@ import { wishlistService } from "../../services/wishlist.service.js";
 
 const mockGame = {
   id: "game-entry-1",
+  wishlistId: "user-1",
   gameId: "game-123",
   gameName: "The Witcher 3",
   addedAt: new Date("2024-06-01T00:00:00.000Z"),
@@ -73,7 +74,7 @@ describe("POST /wishlist/", () => {
 
 describe("DELETE /wishlist/:id", () => {
   it("returns 200 when game is removed", async () => {
-    vi.mocked(wishlistService.deleteGame).mockResolvedValue(undefined);
+    vi.mocked(wishlistService.deleteGame).mockResolvedValue(mockGame);
 
     const res = await app.request("/wishlist/game-entry-1", {
       method: "DELETE",

@@ -17,6 +17,10 @@ auth.post("/sign-out", (c) =>
   proxyRequest(`${env.USER_SERVICE_URL}/auth/sign-out`, c),
 );
 
+auth.get("/get-session", (c) =>
+  proxyRequest(`${env.USER_SERVICE_URL}/auth/session`, c),
+);
+
 /**
  * Wildcard proxy: /api/auth/* → user-service /auth/*
  *

@@ -61,9 +61,16 @@ export const authController = {
 
   async session(c: Context) {
     try {
-      const sessionData = await authService.getSession(
-        new Headers(c.req.raw.headers),
-      );
+      // Explicitly build headers so better-auth can extract the session token.
+      // Passing c.req.raw.headers directly can lose the Cookie header in some
+      // Hono/Node.js configurations.
+      const headers = new Headers();
+      const cookie = c.req.header("cookie");
+      if (cookie) headers.set("cookie", cookie);
+      const authorization = c.req.header("authorization");
+      if (authorization) headers.set("authorization", authorization);
+
+      const sessionData = await authService.getSession(headers);
       return c.json(
         {
           success: true,
@@ -92,7 +99,12 @@ export const authController = {
 
   async signOut(c: Context) {
     try {
-      await authService.signOut(new Headers(c.req.raw.headers));
+      const headers = new Headers();
+      const cookie = c.req.header("cookie");
+      if (cookie) headers.set("cookie", cookie);
+      const authorization = c.req.header("authorization");
+      if (authorization) headers.set("authorization", authorization);
+      await authService.signOut(headers);
       return c.json({ success: true, message: "Signed out successfully" }, 200);
     } catch (error: unknown) {
       const message =

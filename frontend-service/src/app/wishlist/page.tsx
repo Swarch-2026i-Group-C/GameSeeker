@@ -18,7 +18,11 @@ import {
   Loader2,
   PackageOpen,
   AlertTriangle,
+  TrendingDown,
+  X,
 } from 'lucide-react';
+import { usePriceUpdates } from '@/hooks/usePriceUpdates';
+import { formatPrice, storeLabel } from '@/lib/utils';
 
 import {
   getSession,
@@ -32,7 +36,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import { formatPrice, storeLabel } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 
 // ---------------------------------------------------------------------------
@@ -215,6 +218,8 @@ export default function WishlistPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
 
+  const { latestUpdate, dismiss } = usePriceUpdates(games);
+
   useEffect(() => {
     async function load() {
       try {
@@ -276,6 +281,28 @@ export default function WishlistPage() {
         )}
         <div className="h-px bg-gradient-to-r from-primary-container/30 to-transparent mt-3" />
       </div>
+
+      {/* Price drop notification banner */}
+      {latestUpdate && (
+        <div className="mb-5 flex items-center gap-3 rounded-xl px-4 py-3 bg-surface-container ghost-border border-primary-container/30">
+          <TrendingDown className="h-4 w-4 text-primary-container shrink-0" aria-hidden="true" />
+          <p className="flex-1 text-sm text-on-surface">
+            <span className="font-semibold">{latestUpdate.name}</span>
+            {' '}is now{' '}
+            <span className="font-semibold text-primary-container">
+              {formatPrice(latestUpdate.price, latestUpdate.currency)}
+            </span>
+            {' '}on {storeLabel(latestUpdate.store)}
+          </p>
+          <button
+            onClick={dismiss}
+            aria-label="Dismiss notification"
+            className="text-on-surface-variant hover:text-on-surface transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* States */}
       {pageState === 'loading' && <WishlistSkeleton />}

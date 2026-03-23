@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Search, Heart, LogIn, UserPlus, LogOut, Menu } from 'lucide-react';
 
 import { getSession, logout, type Session } from '@/lib/api';
@@ -247,14 +247,17 @@ function MobileNavContent({ session, onLogout, onSearch }: MobileNavProps) {
 
 export function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const [session, setSession] = useState<Session | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  // Re-check session on every navigation so the header reflects auth state
+  // immediately after login/logout without requiring a full page reload.
   useEffect(() => {
     getSession()
       .then(setSession)
       .catch(() => setSession(null));
-  }, []);
+  }, [pathname]);
 
   const handleLogout = useCallback(async () => {
     try {

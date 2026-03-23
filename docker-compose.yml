@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: game-scraper
     ports:
-      - "5000:5000"
+      - "5010:5000"
     environment:
       - FLASK_ENV=production
       - PYTHONUNBUFFERED=1
@@ -54,6 +54,38 @@ services:
     networks:
       - app-network
     restart: unless-stopped
+
+  gateway-service:
+    build:
+      context: ./gateway-service
+      dockerfile: Dockerfile
+    container_name: gateway-service
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: 8080
+      USER_SERVICE_URL: http://user-service:3000
+      SCRAPPER_SERVICE_URL: http://game-scraper:5000
+    depends_on:
+      - user-service
+      - game-scraper
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  frontend-service:
+    build:
+      context: ./frontend-service
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      GATEWAY_URL: http://gateway-service:8080
+      NEXT_PUBLIC_GATEWAY_URL: http://localhost:8080
+    depends_on:
+      - gateway-service
+    networks:
+      - app-network
 
 networks:
   app-network:

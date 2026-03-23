@@ -4,6 +4,8 @@ import {
   ErrorResponse,
   LoginSchema,
   LoginSuccess,
+  SessionSuccess,
+  SignOutSuccess,
   SignupSchema,
   SignupSuccess,
   ZodErrorSchema,
@@ -90,5 +92,59 @@ const loginRoute = createRoute({
 });
 
 auth.openapi(loginRoute, (c) => authController.login(c));
+
+const sessionRoute = createRoute({
+  method: "get",
+  path: "/session",
+  tags: ["Auth"],
+  summary: "Get current session",
+  responses: {
+    200: {
+      description: "Active session",
+      content: {
+        "application/json": {
+          schema: SessionSuccess,
+        },
+      },
+    },
+    401: {
+      description: "No active session",
+      content: {
+        "application/json": {
+          schema: ErrorResponse,
+        },
+      },
+    },
+  },
+});
+
+auth.openapi(sessionRoute, (c) => authController.session(c));
+
+const signOutRoute = createRoute({
+  method: "post",
+  path: "/sign-out",
+  tags: ["Auth"],
+  summary: "Sign out current user",
+  responses: {
+    200: {
+      description: "Signed out successfully",
+      content: {
+        "application/json": {
+          schema: SignOutSuccess,
+        },
+      },
+    },
+    400: {
+      description: "Sign out failed",
+      content: {
+        "application/json": {
+          schema: ErrorResponse,
+        },
+      },
+    },
+  },
+});
+
+auth.openapi(signOutRoute, (c) => authController.signOut(c));
 
 export default auth;

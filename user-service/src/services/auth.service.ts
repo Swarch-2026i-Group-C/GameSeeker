@@ -40,4 +40,22 @@ export const authService = {
 
     return response;
   },
+
+  async getSession(headers: Headers) {
+    const response = await auth.api.getSession({
+      headers,
+    });
+
+    if (!response) {
+      throw new Error("No active session");
+    }
+
+    return response;
+  },
+
+  async signOut(headers: Headers) {
+    await auth.api.signOut({
+      headers,
+    });
+  },
 };

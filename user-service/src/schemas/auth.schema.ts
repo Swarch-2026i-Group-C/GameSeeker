@@ -38,6 +38,23 @@ export const LoginSuccess = z.object({
   data: LoginDataSchema,
 });
 
+export const SessionSuccess = z.object({
+  success: z.literal(true),
+  data: z.object({
+    user: UserSchema,
+    session: z.object({
+      id: z.string(),
+      userId: z.string(),
+      expiresAt: z.string(),
+    }),
+  }),
+});
+
+export const SignOutSuccess = z.object({
+  success: z.literal(true),
+  message: z.string(),
+});
+
 export const ErrorResponse = z.object({
   success: z.literal(false),
   message: z.string(),

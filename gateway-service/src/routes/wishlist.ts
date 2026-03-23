@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { requireAuth } from "../middleware/auth.js";
+import { idempotency } from "../middleware/idempotency.js";
 import { env } from "../lib/env.js";
 import { proxyRequest } from "../lib/proxy.js";
 
@@ -7,6 +8,10 @@ const wishlist = new Hono();
 
 // All wishlist routes require a valid session.
 wishlist.use("/*", requireAuth);
+
+// Prevent duplicate "add to wishlist" requests within 24 h.
+// Runs after requireAuth so userId is available in context.
+wishlist.use("/games", idempotency);
 
 /**
  * Wildcard proxy: /api/wishlist/* -> user-service /wishlist/*

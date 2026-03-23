@@ -1,8 +1,12 @@
 import { Hono } from "hono";
 import { env } from "../lib/env.js";
 import { proxyRequest } from "../lib/proxy.js";
+import { rateLimiter } from "../middleware/rateLimiter.js";
 
 const games = new Hono();
+
+// Rate-limit search to reduce scraping costs under high traffic
+games.use("/search", rateLimiter);
 
 /**
  * Wildcard proxy: /api/games/* -> scrapper-service /api/v1/games/*

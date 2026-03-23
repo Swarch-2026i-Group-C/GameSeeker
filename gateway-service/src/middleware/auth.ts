@@ -39,5 +39,17 @@ export async function requireAuth(c: Context, next: Next): Promise<void> {
     return;
   }
 
+  // Extract userId so downstream middleware (e.g., idempotency) can use it
+  try {
+    const session = (await sessionResponse.json()) as {
+      user?: { id?: string };
+    };
+    if (session?.user?.id) {
+      c.set("userId", session.user.id);
+    }
+  } catch {
+    /* non-fatal — session is valid, userId just won't be set */
+  }
+
   await next();
 }

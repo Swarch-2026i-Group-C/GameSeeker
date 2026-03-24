@@ -6,9 +6,9 @@ This project is built using a **Microservices Architecture** to ensure scalabili
 
 ## 🏗️ Architecture Overview
 
-The system is composed of two main microservices and two backing services orchestrated via Docker Compose:
+The system is composed of four main services and two backing services orchestrated via Docker Compose:
 
-1. **User Service** (`/user-service`): 
+1. **User Service** (`/user-service`):
    - Handles user authentication, session management, and the user's personal wishlist.
    - Built with **Node.js, Hono, Prisma, and PostgreSQL**.
    - Exposes REST APIs documented via **Swagger (OpenAPI)**.
@@ -17,7 +17,15 @@ The system is composed of two main microservices and two backing services orches
    - Responsible for scraping real-time game prices from various digital stores, comparing them, and finding trending games.
    - Built with **Python and Flask**.
 
-3. **Backing Services**:
+3. **Gateway Service** (`/gateway-service`):
+   - Single entry point for all client traffic. Proxies requests to `user-service` and `scrapper-service`, and validates sessions before forwarding protected routes.
+   - Built with **TypeScript and Hono**. Listens on port **8080**.
+
+4. **Frontend Service** (`/frontend-service`):
+   - Web application that provides the user-facing UI for searching games, comparing prices, and managing wishlists.
+   - Built with **Next.js 15, TypeScript, and Shadcn/ui**. Communicates exclusively with `gateway-service`.
+
+5. **Backing Services**:
    - **PostgreSQL**: Primary relational database for the `user-service`.
    - **RabbitMQ**: Message broker used for asynchronous communication and background task queues (e.g., passing scraped trending games data).
 
@@ -54,8 +62,10 @@ Once the Docker Compose environment is running, the following services will be a
 
 | Service | Address | Description |
 |---------|---------|-------------|
-| **User Service API** | `http://localhost:3001` | Main API for Auth & Wishlists. |
-| **User Service Docs** | `http://localhost:3001/ui` | Interactive Swagger UI documentation. |
+| **Frontend** | `http://localhost:3000` | Next.js web application. |
+| **Gateway API** | `http://localhost:8080` | Single entry point for frontend. Proxies auth + games + wishlist. |
+| **User Service API** | `http://localhost:4000` | Main API for Auth & Wishlists. |
+| **User Service Docs** | `http://localhost:4000/ui` | Interactive Swagger UI documentation. |
 | **Scraper Service** | `http://localhost:5000` | Game price comparison and search endpoints. |
 | **RabbitMQ UI** | `http://localhost:15672` | Message broker management dashboard (guest/guest). |
 | **PostgreSQL** | `localhost:5432` | Direct database connection access. |

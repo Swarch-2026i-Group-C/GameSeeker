@@ -4,8 +4,8 @@ FROM base AS builder
 RUN apk add --no-cache gcompat
 WORKDIR /app
 
-COPY package*json tsconfig.json ./
-COPY prisma ./prisma/ 
+COPY package*json tsconfig.json prisma.config.ts ./
+COPY prisma ./prisma/
 
 RUN npm ci
 RUN npx prisma generate
@@ -22,6 +22,7 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 hono
 
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./
 
 COPY --from=builder /app/src/generated/prisma /app/dist/generated/prisma
 
@@ -31,5 +32,5 @@ COPY --from=builder --chown=hono:nodejs /app/package.json /app/package.json
 
 
 USER hono
-EXPOSE 3000
-CMD ["node", "/app/dist/app.js"]
+EXPOSE 4000
+CMD ["sh", "-c", "npx prisma migrate deploy && node /app/dist/src/app.js"]

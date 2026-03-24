@@ -1,94 +1,103 @@
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
-import { authController } from "../controllers/auth.controller.js";
+import { auth } from "../lib/better-auth.js";
 import {
   ErrorResponse,
   LoginSchema,
   LoginSuccess,
+  SessionSuccess,
+  SignOutSuccess,
   SignupSchema,
   SignupSuccess,
-  ZodErrorSchema,
 } from "../schemas/auth.schema.js";
 
-const auth = new OpenAPIHono();
+const authRouter = new OpenAPIHono();
 
 const signupRoute = createRoute({
   method: "post",
-  path: "/signup",
+  path: "/sign-up/email",
   tags: ["Auth"],
   summary: "Register a new user",
   request: {
-    body: {
-      content: {
-        "application/json": {
-          schema: SignupSchema,
-        },
-      },
-    },
+    body: { content: { "application/json": { schema: SignupSchema } } },
   },
   responses: {
     201: {
       description: "User created",
-      content: {
-        "application/json": {
-          schema: SignupSuccess,
-        },
-      },
+      content: { "application/json": { schema: SignupSuccess } },
     },
     400: {
-      description: "Validation error or user already exists",
-      content: {
-        "application/json": {
-          schema: ErrorResponse,
-        },
-      },
+      description: "Error",
+      content: { "application/json": { schema: ErrorResponse } },
     },
   },
 });
-
-auth.openapi(signupRoute, (c) => authController.signup(c));
 
 const loginRoute = createRoute({
   method: "post",
-  path: "/login",
+  path: "/sign-in/email",
   tags: ["Auth"],
-  summary: "Login user",
+  summary: "Login",
   request: {
-    body: {
-      content: {
-        "application/json": {
-          schema: LoginSchema,
-        },
-      },
-    },
+    body: { content: { "application/json": { schema: LoginSchema } } },
   },
   responses: {
     200: {
-      description: "Login successful",
-      content: {
-        "application/json": {
-          schema: LoginSuccess,
-        },
-      },
-    },
-    401: {
-      description: "Invalid credentials",
-      content: {
-        "application/json": {
-          schema: ErrorResponse,
-        },
-      },
+      description: "Login success",
+      content: { "application/json": { schema: LoginSuccess } },
     },
     400: {
-      description: "Validation error",
-      content: {
-        "application/json": {
-          schema: ZodErrorSchema,
-        },
-      },
+      description: "Error",
+      content: { "application/json": { schema: ErrorResponse } },
     },
   },
 });
 
-auth.openapi(loginRoute, (c) => authController.login(c));
+const sessionRoute = createRoute({
+  method: "get",
+  path: "/get-session",
+  tags: ["Auth"],
+  summary: "Get current session",
+  responses: {
+    200: {
+      description: "Session data",
+      content: { "application/json": { schema: SessionSuccess } },
+    },
+    401: {
+      description: "Unauthorized",
+      content: { "application/json": { schema: ErrorResponse } },
+    },
+  },
+});
 
-export default auth;
+const signOutRoute = createRoute({
+  method: "post",
+  path: "/sign-out",
+  tags: ["Auth"],
+  summary: "Sign out",
+  responses: {
+    200: {
+      description: "Signed out",
+      content: { "application/json": { schema: SignOutSuccess } },
+    },
+  },
+});
+
+authRouter.openAPIRegistry.registerPath(signupRoute);
+authRouter.openAPIRegistry.registerPath(loginRoute);
+authRouter.openAPIRegistry.registerPath(sessionRoute);
+authRouter.openAPIRegistry.registerPath(signOutRoute);
+
+authRouter.on([signupRoute.method.toUpperCase()], signupRoute.path, (c) =>
+  auth.handler(c.req.raw),
+);
+authRouter.on([loginRoute.method.toUpperCase()], loginRoute.path, (c) =>
+  auth.handler(c.req.raw),
+);
+authRouter.on([sessionRoute.method.toUpperCase()], sessionRoute.path, (c) =>
+  auth.handler(c.req.raw),
+);
+authRouter.on([signOutRoute.method.toUpperCase()], signOutRoute.path, (c) =>
+  auth.handler(c.req.raw),
+);
+
+export default authRouter;

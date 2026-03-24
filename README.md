@@ -58,7 +58,13 @@ This section contains the formal architectural documentation required for the Pr
 ## 3. Architectural Structures
 
 ### 3.1. Component-and-Connector (C&C) View
-![C&C Architecture View](./diagramCyC.jpeg)
+**Component-and-Connector View**
+
+![C&C Architecture View](./architecture/c-and-c-view.png)
+
+**Scrapper Service Layered View**
+
+![Scrapper Service Layered View](./architecture/scrapper-service-layers.png)
 
 ### 3.2. Description of Architectural Styles Used
 The GameSeeker ecosystem relies on a hybrid architecture that incorporates multiple styles to ensure scalability, low coupling, and reactivity:

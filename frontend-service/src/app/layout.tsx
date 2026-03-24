@@ -1,24 +1,28 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Space_Grotesk } from 'next/font/google';
+import { Lexend, Be_Vietnam_Pro } from 'next/font/google';
 import './globals.css';
 
 import { Navbar } from '@/components/navbar';
 import { cn } from '@/lib/utils';
 
 // ---------------------------------------------------------------------------
-// Fonts
+// Fonts — Digital Sanctuary
+// Lexend: rounded geometric for headlines (friendly + professional)
+// Be Vietnam Pro: clean modern sans for body / long-form reading
 // ---------------------------------------------------------------------------
 
-const inter = Inter({
+const lexend = Lexend({
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-inter',
+  variable: '--font-lexend',
+  weight: ['400', '500', '600', '700', '800'],
 });
 
-const spaceGrotesk = Space_Grotesk({
+const beVietnamPro = Be_Vietnam_Pro({
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-space-grotesk',
+  variable: '--font-be-vietnam-pro',
+  weight: ['300', '400', '500', '600'],
 });
 
 // ---------------------------------------------------------------------------
@@ -64,7 +68,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#111316',
+  themeColor: '#140c0c',
   colorScheme: 'dark',
   width: 'device-width',
   initialScale: 1,
@@ -82,34 +86,36 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn('dark', inter.variable, spaceGrotesk.variable)}
+      className={cn('dark', lexend.variable, beVietnamPro.variable)}
       suppressHydrationWarning
     >
-      <body className="min-h-screen bg-background text-on-surface antialiased">
-        {/* Subtle tactical grid overlay on the entire app */}
+      <body className="min-h-dvh bg-background text-on-surface antialiased">
+        {/* Sanctuary depth — subtle warm/lavender ambient gradients */}
         <div
-          className="pointer-events-none fixed inset-0 tactical-grid opacity-100 z-0"
+          className="pointer-events-none fixed inset-0 sanctuary-depth z-0"
           aria-hidden="true"
         />
 
-        {/* Content layer sits above grid */}
-        <div className="relative z-10 flex min-h-screen flex-col">
+        {/* Content layer */}
+        <div className="relative z-10 flex min-h-dvh flex-col">
           <Navbar />
 
           <main className="flex-1">
             {children}
           </main>
 
-          <footer className="mt-auto border-t border-outline-variant/10 py-6">
+          <footer className="mt-auto py-8">
             <div className="container mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
               <p className="text-xs text-on-surface-variant">
                 &copy; {new Date().getFullYear()} GameSeeker. Prices scraped in
                 real-time — verify at checkout.
               </p>
-              <div className="flex items-center gap-4">
-                <span className="text-[10px] text-on-surface-variant/40 font-mono">
-                  SIGNAL INTELLIGENCE v0.1.0
-                </span>
+              <div className="flex items-center gap-6">
+                {['Steam', 'Epic', 'GOG', 'Xbox'].map((store) => (
+                  <span key={store} className="text-xs text-on-surface-variant/40 font-body">
+                    {store}
+                  </span>
+                ))}
               </div>
             </div>
           </footer>

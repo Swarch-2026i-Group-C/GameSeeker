@@ -49,7 +49,8 @@ This section contains the formal architectural documentation required for the Pr
 
 ## 2. Software System
 - **Name:** GameSeeker
-- **Logo:** *Imagen aqui*
+- **Logo:**  
+  <img src="./docs/assets/gameseeker-logo.jpg" alt="GameSeeker logo" width="180" />
 - **Description:** GameSeeker is a web application designed to help gamers find the best prices for their favorite games across multiple digital storefronts (Steam, Epic Games, GOG, etc.) and manage a centralized wishlist. 
 
 ---

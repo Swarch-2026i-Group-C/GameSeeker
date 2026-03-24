@@ -18,7 +18,7 @@ services:
       context: ./user-service
     container_name: user-service
     ports:
-      - "3001:3000"
+      - "4000:4000"
     env_file:
       - ./user-service/.env
     depends_on:
@@ -71,7 +71,7 @@ services:
       - "8080:8080"
     environment:
       PORT: 8080
-      USER_SERVICE_URL: http://user-service:3000
+      USER_SERVICE_URL: http://user-service:4000
       SCRAPPER_SERVICE_URL: http://game-scraper:5000
       REDIS_URL: redis://redis:6379
       RABBITMQ_HOST: rabbitmq
@@ -88,19 +88,19 @@ services:
       - app-network
     restart: unless-stopped
 
-  frontend-service:
-    build:
-      context: ./frontend-service
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    environment:
-      GATEWAY_URL: http://gateway-service:8080
-      NEXT_PUBLIC_GATEWAY_URL: http://localhost:8080
-    depends_on:
-      - gateway-service
-    networks:
-      - app-network
+  # frontend-service:
+  #   build:
+  #     context: ./frontend-service
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     GATEWAY_URL: http://gateway-service:8080
+  #     NEXT_PUBLIC_GATEWAY_URL: http://localhost:8080
+  #   depends_on:
+  #     - gateway-service
+  #   networks:
+  #     - app-network
 
 networks:
   app-network:

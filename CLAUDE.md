@@ -10,7 +10,7 @@ GameSeeker is a microservices-based game price comparison platform. It scrapes p
 
 | Service | Language/Framework | Port |
 |---|---|---|
-| `user-service` | TypeScript / Hono / Prisma | 3001 (ext) → 3000 (int) |
+| `user-service` | TypeScript / Hono / Prisma | 4000 |
 | `scrapper-service` | Python / Flask | 5000 |
 | `postgres` | PostgreSQL 15 | 5433 (ext) → 5432 (int) |
 | `rabbitmq` | RabbitMQ 3 | 5672 (AMQP), 15672 (Management UI) |

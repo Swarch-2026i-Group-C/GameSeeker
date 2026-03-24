@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Break the module chain before vitest tries to resolve the generated Prisma client
 vi.mock("../../lib/prisma.js", () => ({ default: {} }));

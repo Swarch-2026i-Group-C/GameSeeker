@@ -1,22 +1,14 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Break the module chain before vitest tries to resolve the generated Prisma client
-// and better-auth internals that require a live DB connection.
 vi.mock("../../lib/prisma.js", () => ({ default: {} }));
-vi.mock("../../lib/better-auth.js", () => ({ auth: { api: {} } }));
-
-// Mock the entire authService module so no real logic runs
-vi.mock("../../services/auth.service.js", () => ({
-  authService: {
-    registerUser: vi.fn(),
-    loginUser: vi.fn(),
-    getSession: vi.fn(),
-    signOut: vi.fn(),
+vi.mock("../../lib/better-auth.js", () => ({
+  auth: {
+    handler: vi.fn(),
   },
 }));
 
 import app from "../../app.js";
-import { authService } from "../../services/auth.service.js";
+import { auth } from "../../lib/better-auth.js";
 
 const mockUser = {
   id: "user-1",
@@ -24,37 +16,36 @@ const mockUser = {
   email: "test@example.com",
   emailVerified: false,
   image: null,
-  createdAt: new Date("2024-01-01T00:00:00.000Z"),
-  updatedAt: new Date("2024-01-01T00:00:00.000Z"),
-};
-
-const mockSessionData = {
-  redirect: false,
-  token: "session-token-abc",
-  user: mockUser,
-};
-
-const mockSession = {
-  user: mockUser,
-  session: {
-    id: "session-1",
-    userId: "user-1",
-    token: "session-token-abc",
-    expiresAt: new Date("2025-01-01T00:00:00.000Z"),
-    createdAt: new Date("2024-01-01T00:00:00.000Z"),
-    updatedAt: new Date("2024-01-01T00:00:00.000Z"),
-  },
+  createdAt: "2024-01-01T00:00:00.000Z",
+  updatedAt: "2024-01-01T00:00:00.000Z",
 };
 
 beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe("POST /auth/signup", () => {
-  it("returns 201 with user data on success", async () => {
-    vi.mocked(authService.registerUser).mockResolvedValue(mockUser);
+// Helper para crear un Response JSON simulado
+function jsonResponse(
+  body: unknown,
+  status = 200,
+  headers?: Record<string, string>,
+): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      ...headers,
+    },
+  });
+}
 
-    const res = await app.request("/auth/signup", {
+describe("POST /api/auth/sign-up/email", () => {
+  it("returns 201 with user data on success", async () => {
+    vi.mocked(auth.handler).mockResolvedValue(
+      jsonResponse({ user: mockUser, token: null }, 201),
+    );
+
+    const res = await app.request("/api/auth/sign-up/email", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -66,17 +57,15 @@ describe("POST /auth/signup", () => {
 
     expect(res.status).toBe(201);
     const body = await res.json();
-    expect(body.success).toBe(true);
-    expect(body.data.email).toBe("test@example.com");
-    expect(body.data.createdAt).toBe("2024-01-01T00:00:00.000Z");
+    expect(body.user.email).toBe("test@example.com");
   });
 
-  it("returns 400 when service throws", async () => {
-    vi.mocked(authService.registerUser).mockRejectedValue(
-      new Error("Email already in use"),
+  it("returns 400 when email is already in use", async () => {
+    vi.mocked(auth.handler).mockResolvedValue(
+      jsonResponse({ message: "User already exists" }, 400),
     );
 
-    const res = await app.request("/auth/signup", {
+    const res = await app.request("/api/auth/sign-up/email", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -88,16 +77,38 @@ describe("POST /auth/signup", () => {
 
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.success).toBe(false);
-    expect(body.message).toBe("Email already in use");
+    expect(body.message).toBe("User already exists");
+  });
+
+  it("returns 422 when body is invalid", async () => {
+    vi.mocked(auth.handler).mockResolvedValue(
+      jsonResponse({ message: "Invalid email address" }, 422),
+    );
+
+    const res = await app.request("/api/auth/sign-up/email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "not-an-email", password: "123" }),
+    });
+
+    expect(res.status).toBe(422);
   });
 });
 
-describe("POST /auth/login", () => {
-  it("returns 200 with token and Set-Cookie header on success", async () => {
-    vi.mocked(authService.loginUser).mockResolvedValue(mockSessionData);
+describe("POST /api/auth/sign-in/email", () => {
+  it("returns 200 with token and Set-Cookie on success", async () => {
+    vi.mocked(auth.handler).mockResolvedValue(
+      jsonResponse(
+        { redirect: false, token: "session-token-abc", user: mockUser },
+        200,
+        {
+          "Set-Cookie":
+            "better-auth.session_token=session-token-abc; Path=/; HttpOnly",
+        },
+      ),
+    );
 
-    const res = await app.request("/auth/login", {
+    const res = await app.request("/api/auth/sign-in/email", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -108,18 +119,17 @@ describe("POST /auth/login", () => {
 
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.success).toBe(true);
-    expect(body.message).toBe("Logged in successfully");
-    expect(body.data.token).toBe("session-token-abc");
+    expect(body.token).toBe("session-token-abc");
+    expect(body.user.id).toBe("user-1");
     expect(res.headers.get("Set-Cookie")).toContain("session-token-abc");
   });
 
-  it("returns 401 when service throws", async () => {
-    vi.mocked(authService.loginUser).mockRejectedValue(
-      new Error("Invalid credentials"),
+  it("returns 401 with invalid credentials", async () => {
+    vi.mocked(auth.handler).mockResolvedValue(
+      jsonResponse({ message: "Invalid email or password" }, 401),
     );
 
-    const res = await app.request("/auth/login", {
+    const res = await app.request("/api/auth/sign-in/email", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -130,56 +140,76 @@ describe("POST /auth/login", () => {
 
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.success).toBe(false);
-    expect(body.message).toBe("Invalid credentials");
+    expect(body.message).toBe("Invalid email or password");
   });
 });
 
-describe("GET /auth/session", () => {
-  it("returns 200 with session data on success", async () => {
-    vi.mocked(authService.getSession).mockResolvedValue(mockSession);
+describe("GET /api/auth/get-session", () => {
+  it("returns 200 with session and user on valid cookie", async () => {
+    vi.mocked(auth.handler).mockResolvedValue(
+      jsonResponse({
+        user: mockUser,
+        session: {
+          id: "session-1",
+          userId: "user-1",
+          expiresAt: "2025-01-01T00:00:00.000Z",
+        },
+      }),
+    );
 
-    const res = await app.request("/auth/session", {
+    const res = await app.request("/api/auth/get-session", {
       method: "GET",
-      headers: { Cookie: "better-auth.session_token=abc123" },
+      headers: { Cookie: "better-auth.session_token=valid-token" },
     });
 
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.success).toBe(true);
-    expect(body.data.user.id).toBe("user-1");
-    expect(body.data.session.userId).toBe("user-1");
-    expect(body.data.session.expiresAt).toBe("2025-01-01T00:00:00.000Z");
+    expect(body.user.id).toBe("user-1");
+    expect(body.session.userId).toBe("user-1");
+    expect(body.session.expiresAt).toBe("2025-01-01T00:00:00.000Z");
   });
 
-  it("returns 401 when service throws No active session", async () => {
-    vi.mocked(authService.getSession).mockRejectedValue(
-      new Error("No active session"),
+  it("returns 401 when no session cookie is present", async () => {
+    vi.mocked(auth.handler).mockResolvedValue(
+      jsonResponse({ message: "Unauthorized" }, 401),
     );
 
-    const res = await app.request("/auth/session", {
+    const res = await app.request("/api/auth/get-session", {
       method: "GET",
     });
 
     expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body.success).toBe(false);
-    expect(body.message).toBe("No active session");
+    expect(body.message).toBe("Unauthorized");
   });
 });
 
-describe("POST /auth/sign-out", () => {
+describe("POST /api/auth/sign-out", () => {
   it("returns 200 on successful sign out", async () => {
-    vi.mocked(authService.signOut).mockResolvedValue(undefined);
+    vi.mocked(auth.handler).mockResolvedValue(
+      jsonResponse({ message: "Signed out successfully" }, 200),
+    );
 
-    const res = await app.request("/auth/sign-out", {
+    const res = await app.request("/api/auth/sign-out", {
       method: "POST",
-      headers: { Cookie: "better-auth.session_token=abc123" },
+      headers: { Cookie: "better-auth.session_token=valid-token" },
     });
 
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.success).toBe(true);
     expect(body.message).toBe("Signed out successfully");
+  });
+
+  it("calls auth.handler once", async () => {
+    vi.mocked(auth.handler).mockResolvedValue(
+      jsonResponse({ message: "Signed out successfully" }, 200),
+    );
+
+    await app.request("/api/auth/sign-out", {
+      method: "POST",
+      headers: { Cookie: "better-auth.session_token=valid-token" },
+    });
+
+    expect(auth.handler).toHaveBeenCalledTimes(1);
   });
 });

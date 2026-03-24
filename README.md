@@ -64,8 +64,8 @@ Once the Docker Compose environment is running, the following services will be a
 |---------|---------|-------------|
 | **Frontend** | `http://localhost:3000` | Next.js web application. |
 | **Gateway API** | `http://localhost:8080` | Single entry point for frontend. Proxies auth + games + wishlist. |
-| **User Service API** | `http://localhost:3001` | Main API for Auth & Wishlists. |
-| **User Service Docs** | `http://localhost:3001/ui` | Interactive Swagger UI documentation. |
+| **User Service API** | `http://localhost:4000` | Main API for Auth & Wishlists. |
+| **User Service Docs** | `http://localhost:4000/ui` | Interactive Swagger UI documentation. |
 | **Scraper Service** | `http://localhost:5000` | Game price comparison and search endpoints. |
 | **RabbitMQ UI** | `http://localhost:15672` | Message broker management dashboard (guest/guest). |
 | **PostgreSQL** | `localhost:5432` | Direct database connection access. |

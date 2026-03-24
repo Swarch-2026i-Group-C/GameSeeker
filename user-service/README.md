@@ -18,7 +18,7 @@ The **User Service** is the core microservice responsible for handling user iden
 The User Service features self-generating **OpenAPI (Swagger)** documentation.
 When the service is running, you can access the interactive Swagger UI at:
 
-👉 **`http://localhost:3001/ui`**
+👉 **`http://localhost:4001/ui`**
 
 This UI allows you to explore all available endpoints, required request bodies, and exact response schemas for Authentication and Wishlist operations. 
 
@@ -36,7 +36,7 @@ Create a `.env` file based on `.env.example` in this directory:
 ```env
 DATABASE_URL="postgresql://gameseeker:secretpassword@localhost:5432/gameseeker?schema=public"
 BETTER_AUTH_SECRET="your_secret_here"
-BETTER_AUTH_URL="http://localhost:3001"
+BETTER_AUTH_URL="http://localhost:4000"
 ```
 
 ### 3. Database Sync (Prisma)
@@ -51,7 +51,7 @@ npx prisma generate
 ```bash
 npm run dev
 ```
-The server will start on port `3001` and hot-reload on changes.
+The server will start on port `4000` and hot-reload on changes.
 
 ## 📜 Available Scripts
 

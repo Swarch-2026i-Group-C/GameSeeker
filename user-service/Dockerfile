@@ -32,5 +32,5 @@ COPY --from=builder --chown=hono:nodejs /app/package.json /app/package.json
 
 
 USER hono
-EXPOSE 3000
+EXPOSE 4000
 CMD ["sh", "-c", "npx prisma migrate deploy && node /app/dist/src/app.js"]

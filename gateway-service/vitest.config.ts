@@ -5,7 +5,7 @@ export default defineConfig({
     environment: "node",
     // Set required env vars before any module is loaded
     env: {
-      USER_SERVICE_URL: "http://user-service:3000",
+      USER_SERVICE_URL: "http://user-service:4000",
       SCRAPPER_SERVICE_URL: "http://scrapper-service:5000",
     },
   },

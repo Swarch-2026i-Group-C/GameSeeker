@@ -7,7 +7,7 @@ import "dotenv/config";
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL,
   trustedOrigins: [
-    "http://localhost:3000",
+    "http://localhost:4000",
     "http://localhost:8080",
     "http://gateway-service:8080",
     "http://frontend-service:3000",

@@ -105,7 +105,7 @@ function ChartPlaceholder() {
   return (
     <div className="relative w-full h-64 rounded-xl bg-surface-container-low ghost-border overflow-hidden flex items-center justify-center">
       {/* Grid lines suggestion */}
-      <div className="absolute inset-0 tactical-grid opacity-50" aria-hidden="true" />
+      <div className="absolute inset-0 sanctuary-depth opacity-100" aria-hidden="true" />
 
       {/* Simulated chart line using SVG */}
       <svg

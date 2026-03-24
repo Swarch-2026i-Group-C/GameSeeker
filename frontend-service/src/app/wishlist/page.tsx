@@ -25,13 +25,12 @@ import { usePriceUpdates } from '@/hooks/usePriceUpdates';
 import { formatPrice, storeLabel } from '@/lib/utils';
 
 import {
-  getSession,
   getWishlist,
   removeFromWishlist,
   type WishlistGame,
-  type Session,
   type ApiError,
 } from '@/lib/api';
+import { userStore } from '@/lib/user-store';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -212,7 +211,7 @@ function WishlistRow({ game, onRemove, isRemoving }: WishlistRowProps) {
 export default function WishlistPage() {
   const router = useRouter();
 
-  const [session, setSession] = useState<Session | null>(null);
+  const user = userStore.get();
   const [games, setGames] = useState<WishlistGame[]>([]);
   const [pageState, setPageState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState('');
@@ -223,13 +222,6 @@ export default function WishlistPage() {
   useEffect(() => {
     async function load() {
       try {
-        const sess = await getSession();
-        if (!sess) {
-          router.replace('/auth/login');
-          return;
-        }
-        setSession(sess);
-
         const wishlist = await getWishlist();
         setGames(wishlist.games);
         setPageState('ready');
@@ -273,10 +265,10 @@ export default function WishlistPage() {
             My Wishlist
           </h1>
         </div>
-        {session && (
+        {user && (
           <p className="text-sm text-on-surface-variant">
             Signed in as{' '}
-            <span className="text-on-surface font-medium">{session.user.name}</span>
+            <span className="text-on-surface font-medium">{user.name}</span>
           </p>
         )}
         <div className="h-px bg-gradient-to-r from-primary-container/30 to-transparent mt-3" />

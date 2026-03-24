@@ -229,6 +229,14 @@ export async function getTrending(store: string): Promise<TrendingGame[]> {
 // Auth endpoints (user-service via gateway)
 // ---------------------------------------------------------------------------
 
+interface LoginApiResponse {
+  success: boolean;
+  data: {
+    user: AuthUser & { createdAt?: string; updatedAt?: string };
+    token: string;
+  };
+}
+
 /**
  * Sign in with email and password.
  * Maps to: POST /api/auth/sign-in/email
@@ -236,14 +244,16 @@ export async function getTrending(store: string): Promise<TrendingGame[]> {
 export async function login(
   email: string,
   password: string,
-): Promise<{ user: AuthUser; session: Session }> {
-  return apiFetch<{ user: AuthUser; session: Session }>(
+): Promise<AuthUser> {
+  const res = await apiFetch<LoginApiResponse>(
     '/api/auth/sign-in/email',
     {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     },
   );
+  const { id, name, email: userEmail, image } = res.data.user;
+  return { id, name, email: userEmail, image: image ?? undefined };
 }
 
 /**
@@ -254,14 +264,17 @@ export async function signup(
   name: string,
   email: string,
   password: string,
-): Promise<{ user: AuthUser; session: Session }> {
-  return apiFetch<{ user: AuthUser; session: Session }>(
+): Promise<AuthUser> {
+  // Register the user
+  await apiFetch<{ success: boolean; data: unknown }>(
     '/api/auth/sign-up/email',
     {
       method: 'POST',
       body: JSON.stringify({ name, email, password }),
     },
   );
+  // Signup doesn't create a session — auto-login to get one
+  return login(email, password);
 }
 
 /**
@@ -296,7 +309,28 @@ export async function getSession(): Promise<Session | null> {
  * Maps to: GET /api/wishlist
  */
 export async function getWishlist(): Promise<Wishlist> {
-  return apiFetch<Wishlist>('/api/wishlist');
+  const raw = await apiFetch<{
+    success: boolean;
+    data: {
+      userId: string;
+      createdAt: string;
+      games: Array<{ id: string; gameId: string; gameName: string; addedAt: string }>;
+    } | null;
+  }>('/api/wishlist');
+
+  const data = raw.data ?? { userId: '', createdAt: '', games: [] };
+  return {
+    id: data.userId,
+    userId: data.userId,
+    games: data.games.map((g) => ({
+      id: g.id,
+      name: g.gameName,
+      slug: g.gameId,
+      storeUrl: '',
+      store: 'steam',
+      addedAt: g.addedAt,
+    })),
+  };
 }
 
 /**
@@ -312,10 +346,23 @@ export async function addToWishlist(gameData: {
   priceAtAdd?: number;
   currency?: string;
 }): Promise<WishlistGame> {
-  return apiFetch<WishlistGame>('/api/wishlist/games', {
-    method: 'POST',
-    body: JSON.stringify(gameData),
-  });
+  const raw = await apiFetch<{ success: boolean; data: { id: string; gameId: string; gameName: string; addedAt: string } }>(
+    '/api/wishlist/games',
+    {
+      method: 'POST',
+      body: JSON.stringify(gameData),
+    },
+  );
+  return {
+    id: raw.data.id,
+    name: raw.data.gameName,
+    slug: raw.data.gameId,
+    storeUrl: gameData.storeUrl,
+    store: gameData.store,
+    priceAtAdd: gameData.priceAtAdd,
+    currency: gameData.currency,
+    addedAt: raw.data.addedAt,
+  };
 }
 
 /**

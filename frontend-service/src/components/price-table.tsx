@@ -1,11 +1,9 @@
 import React from 'react';
 import Link from 'next/link';
-import { ExternalLink, CheckCircle2, XCircle, TrendingDown } from 'lucide-react';
+import { ExternalLink, CheckCircle2, XCircle, TrendingDown, Trophy } from 'lucide-react';
 
 import { type StorePriceSummary } from '@/lib/api';
 import { cn, formatPrice, storeLabel, discountPercent } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -13,171 +11,159 @@ import { Button } from '@/components/ui/button';
 
 export interface PriceTableProps {
   stores: StorePriceSummary[];
-  /** Highlight the row for this store key as the best deal */
   bestStore?: string;
   className?: string;
 }
 
 // ---------------------------------------------------------------------------
-// Store icon placeholder (coloured initial badge)
+// Store identity
 // ---------------------------------------------------------------------------
 
-function StoreIcon({ store }: { store: string }) {
-  const palette: Record<string, { bg: string; text: string }> = {
-    steam: { bg: '#1b2838', text: '#c7d5e0' },
-    epic: { bg: '#2a2a2a', text: '#ffffff' },
-    gog: { bg: '#3d1a6e', text: '#c98eed' },
-    microsoft: { bg: '#0a3d0a', text: '#5fba5f' },
+const STORE_PALETTE: Record<string, { accent: string; bg: string; label: string }> = {
+  steam:     { accent: '#4a8dca', bg: 'rgba(74,141,202,0.10)',  label: 'Steam' },
+  epic:      { accent: '#e0e0e0', bg: 'rgba(224,224,224,0.06)', label: 'Epic Games' },
+  gog:       { accent: '#b95fe1', bg: 'rgba(185,95,225,0.10)',  label: 'GOG' },
+  microsoft: { accent: '#5fba5f', bg: 'rgba(95,186,95,0.10)',   label: 'Xbox' },
+};
+
+function getStore(key: string) {
+  return STORE_PALETTE[key.toLowerCase()] ?? {
+    accent: '#c4a8a5',
+    bg: 'rgba(196,168,165,0.06)',
+    label: key,
   };
-
-  const key = store.toLowerCase();
-  const colors = palette[key] ?? { bg: '#282a2d', text: '#b9ccb2' };
-
-  return (
-    <span
-      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-xs font-bold font-headline"
-      style={{ backgroundColor: colors.bg, color: colors.text }}
-      aria-hidden="true"
-    >
-      {store.slice(0, 2).toUpperCase()}
-    </span>
-  );
 }
 
 // ---------------------------------------------------------------------------
-// Individual row
+// Deal Card — one per store
 // ---------------------------------------------------------------------------
 
-interface PriceRowProps {
+interface DealCardProps {
   entry: StorePriceSummary;
   isBest: boolean;
   rank: number;
 }
 
-function PriceRow({ entry, isBest, rank }: PriceRowProps) {
+function DealCard({ entry, isBest, rank }: DealCardProps) {
+  const store = getStore(entry.store);
   const discount =
     entry.originalPrice != null && entry.price != null
       ? discountPercent(entry.originalPrice, entry.price)
       : null;
 
   return (
-    <tr
+    <div
       className={cn(
-        'group transition-colors duration-150',
+        'relative flex items-center gap-4 rounded-2xl p-4 transition-all duration-200',
         isBest
-          ? 'bg-primary-container/5 hover:bg-primary-container/10'
-          : 'hover:bg-surface-container-high',
+          ? 'bg-surface-container-high'
+          : 'bg-surface-container hover:bg-surface-container-high',
       )}
+      style={isBest ? { boxShadow: `0 0 0 1px ${store.accent}22, 0 8px 24px rgba(255,154,93,0.08)` } : {}}
     >
-      {/* Rank */}
-      <td className="w-10 pl-4 py-3 text-center">
-        <span
-          className={cn(
-            'inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold font-headline',
-            rank === 1
-              ? 'bg-primary-container text-primary-on-container'
-              : 'bg-surface-container-high text-on-surface-variant',
-          )}
+      {/* Best deal crown */}
+      {isBest && (
+        <div
+          className="absolute -top-2.5 -right-1 flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold font-headline"
+          style={{ background: 'linear-gradient(135deg, #ff9a5d, #f9873e)', color: '#1c0800' }}
         >
-          {rank}
-        </span>
-      </td>
-
-      {/* Store */}
-      <td className="py-3 pr-4">
-        <div className="flex items-center gap-2.5">
-          <StoreIcon store={entry.store} />
-          <div className="flex flex-col">
-            <span className="text-sm font-medium font-headline text-on-surface">
-              {storeLabel(entry.store)}
-            </span>
-            {isBest && (
-              <span className="text-[10px] text-primary-fixed-dim font-semibold">
-                Best price
-              </span>
-            )}
-          </div>
+          <Trophy className="h-2.5 w-2.5" aria-hidden="true" />
+          Best Deal
         </div>
-      </td>
+      )}
 
-      {/* Availability */}
-      <td className="py-3 pr-4 hidden sm:table-cell">
-        {entry.inStock ? (
-          <div className="flex items-center gap-1 text-primary-fixed-dim">
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            <span className="text-xs">Available</span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-1 text-error">
-            <XCircle className="h-3.5 w-3.5" />
-            <span className="text-xs">Unavailable</span>
-          </div>
-        )}
-      </td>
+      {/* Rank */}
+      <span
+        className="shrink-0 h-6 w-6 flex items-center justify-center rounded-full text-[11px] font-bold font-headline"
+        style={
+          rank === 1
+            ? { background: 'linear-gradient(135deg, #ff9a5d, #f9873e)', color: '#1c0800' }
+            : { background: 'rgba(255,255,255,0.06)', color: '#c4a8a5' }
+        }
+      >
+        {rank}
+      </span>
 
-      {/* Original price */}
-      <td className="py-3 pr-4 text-right hidden md:table-cell">
-        {entry.originalPrice != null && entry.originalPrice !== entry.price ? (
-          <span className="text-sm text-on-surface-variant line-through">
-            {formatPrice(entry.originalPrice, entry.currency)}
-          </span>
-        ) : (
-          <span className="text-on-surface-variant/30">—</span>
-        )}
-      </td>
+      {/* Store icon */}
+      <div
+        className="shrink-0 h-9 w-9 rounded-xl flex items-center justify-center text-xs font-bold font-headline"
+        style={{ background: store.bg, color: store.accent }}
+      >
+        {entry.store.slice(0, 2).toUpperCase()}
+      </div>
 
-      {/* Discount badge */}
-      <td className="py-3 pr-4 text-right hidden sm:table-cell">
-        {discount != null && discount > 0 ? (
-          <Badge variant="success" className="gap-0.5">
-            <TrendingDown className="h-2.5 w-2.5" />
-            -{discount}%
-          </Badge>
-        ) : (
-          <span className="text-on-surface-variant/30 text-xs">—</span>
-        )}
-      </td>
+      {/* Store name + availability */}
+      <div className="flex-1 min-w-0">
+        <p className="font-headline font-semibold text-sm text-on-surface">
+          {storeLabel(entry.store)}
+        </p>
+        <div className="flex items-center gap-1 mt-0.5">
+          {entry.inStock ? (
+            <>
+              <CheckCircle2 className="h-3 w-3 text-tertiary-container shrink-0" aria-hidden="true" />
+              <span className="text-[11px] text-tertiary-container font-body">Available</span>
+            </>
+          ) : (
+            <>
+              <XCircle className="h-3 w-3 text-error shrink-0" aria-hidden="true" />
+              <span className="text-[11px] text-error font-body">Unavailable</span>
+            </>
+          )}
+        </div>
+      </div>
 
-      {/* Current price */}
-      <td className="py-3 pr-4 text-right">
+      {/* Pricing info */}
+      <div className="shrink-0 text-right flex flex-col items-end gap-1">
+        {/* Current price */}
         <span
+          className="font-headline font-bold text-lg"
+          style={{ color: isBest ? '#ff9a5d' : '#f0dbd9' }}
+        >
+          {entry.price != null ? formatPrice(entry.price, entry.currency) : 'N/A'}
+        </span>
+
+        <div className="flex items-center gap-1.5 flex-wrap justify-end">
+          {/* Original price */}
+          {entry.originalPrice != null && entry.originalPrice !== entry.price && (
+            <span className="text-xs text-on-surface-variant/50 line-through font-body">
+              {formatPrice(entry.originalPrice, entry.currency)}
+            </span>
+          )}
+          {/* Discount */}
+          {discount != null && discount > 0 && (
+            <span
+              className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold font-headline"
+              style={{ background: 'rgba(93,184,150,0.15)', color: '#7ecfb1' }}
+            >
+              <TrendingDown className="h-2.5 w-2.5" aria-hidden="true" />
+              -{discount}%
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* CTA button */}
+      {entry.inStock && entry.url ? (
+        <Link
+          href={entry.url}
+          target="_blank"
+          rel="noopener noreferrer"
           className={cn(
-            'font-headline font-semibold text-base',
-            isBest ? 'text-primary-fixed-dim' : 'text-on-surface',
+            'shrink-0 inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold font-headline transition-all duration-200',
+            isBest
+              ? 'btn-sunset hover:shadow-glow-primary active:scale-[0.97]'
+              : 'bg-surface-container-highest text-on-surface hover:bg-surface-container-high',
           )}
         >
-          {entry.price != null
-            ? formatPrice(entry.price, entry.currency)
-            : 'N/A'}
+          Buy
+          <ExternalLink className="h-3 w-3" aria-hidden="true" />
+        </Link>
+      ) : (
+        <span className="shrink-0 text-xs text-on-surface-variant/40 font-body px-4">
+          N/A
         </span>
-      </td>
-
-      {/* CTA */}
-      <td className="py-3 pr-4 text-right">
-        {entry.inStock && entry.url ? (
-          <Button
-            variant={isBest ? 'default' : 'tactical'}
-            size="sm"
-            asChild
-            className={cn(isBest && 'animate-pulse-glow')}
-          >
-            <Link
-              href={entry.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5"
-            >
-              Buy
-              <ExternalLink className="h-3 w-3" />
-            </Link>
-          </Button>
-        ) : (
-          <Button variant="ghost" size="sm" disabled>
-            Unavailable
-          </Button>
-        )}
-      </td>
-    </tr>
+      )}
+    </div>
   );
 }
 
@@ -186,24 +172,19 @@ function PriceRow({ entry, isBest, rank }: PriceRowProps) {
 // ---------------------------------------------------------------------------
 
 export function PriceTable({ stores, bestStore, className }: PriceTableProps) {
-  // Sort: in-stock first, then by price ascending
   const sorted = [...stores].sort((a, b) => {
     if (a.inStock && !b.inStock) return -1;
     if (!a.inStock && b.inStock) return 1;
-    const pa = a.price ?? Infinity;
-    const pb = b.price ?? Infinity;
-    return pa - pb;
+    return (a.price ?? Infinity) - (b.price ?? Infinity);
   });
 
-  // Determine best programmatically if not supplied
   const computedBest =
-    bestStore ??
-    sorted.find((s) => s.inStock && s.price != null)?.store;
+    bestStore ?? sorted.find((s) => s.inStock && s.price != null)?.store;
 
   if (stores.length === 0) {
     return (
-      <div className={cn('rounded-xl bg-surface-container ghost-border p-8 text-center', className)}>
-        <p className="text-on-surface-variant text-sm">
+      <div className={cn('rounded-2xl bg-surface-container p-8 text-center', className)}>
+        <p className="text-on-surface-variant text-sm font-body">
           No price data available for this title yet.
         </p>
       </div>
@@ -211,62 +192,32 @@ export function PriceTable({ stores, bestStore, className }: PriceTableProps) {
   }
 
   return (
-    <div className={cn('rounded-xl bg-surface-container ghost-border overflow-hidden', className)}>
+    <div className={cn('flex flex-col gap-3', className)}>
       {/* Header */}
-      <div className="px-4 py-3 bg-surface-container-high flex items-center justify-between">
-        <h2 className="font-headline font-semibold text-on-surface text-sm tracking-wide uppercase">
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="font-headline font-semibold text-on-surface text-sm">
           Price Comparison
         </h2>
-        <span className="text-xs text-on-surface-variant">
-          {stores.filter((s) => s.inStock).length} of {stores.length} stores available
+        <span className="text-xs text-on-surface-variant/60 font-body">
+          {stores.filter((s) => s.inStock).length} of {stores.length}{' '}
+          {stores.length === 1 ? 'store' : 'stores'} available
         </span>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="border-b border-outline-variant/10">
-              <th className="w-10 pl-4 py-2 text-left" aria-label="Rank" />
-              <th className="py-2 pr-4 text-left text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
-                Store
-              </th>
-              <th className="py-2 pr-4 text-left text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden sm:table-cell">
-                Status
-              </th>
-              <th className="py-2 pr-4 text-right text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden md:table-cell">
-                Original
-              </th>
-              <th className="py-2 pr-4 text-right text-xs font-semibold text-on-surface-variant uppercase tracking-wider hidden sm:table-cell">
-                Sale
-              </th>
-              <th className="py-2 pr-4 text-right text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
-                Price
-              </th>
-              <th className="py-2 pr-4 text-right text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
-                Action
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-outline-variant/10">
-            {sorted.map((entry, idx) => (
-              <PriceRow
-                key={entry.store}
-                entry={entry}
-                isBest={entry.store === computedBest}
-                rank={idx + 1}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* Deal cards */}
+      {sorted.map((entry, idx) => (
+        <DealCard
+          key={entry.store}
+          entry={entry}
+          isBest={entry.store === computedBest}
+          rank={idx + 1}
+        />
+      ))}
 
       {/* Footer note */}
-      <div className="px-4 py-2.5 bg-surface-container-lowest">
-        <p className="text-[10px] text-on-surface-variant/60">
-          Prices are scraped in real-time and may differ at checkout. Always verify on the store page.
-        </p>
-      </div>
+      <p className="text-[10px] text-on-surface-variant/40 font-body text-center pt-1">
+        Prices scraped in real-time — verify at checkout.
+      </p>
     </div>
   );
 }

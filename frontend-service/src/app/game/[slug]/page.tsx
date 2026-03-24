@@ -1,8 +1,8 @@
 /**
  * Game detail page — server component.
  *
- * Fetches compareGame(slug) to get full price comparison data.
- * The add-to-wishlist button is a client island within this server page.
+ * Cinematic header with blurred cover art background, floating cover card,
+ * price deal cards, and a history nudge in sanctuary style.
  */
 
 import React from 'react';
@@ -11,17 +11,16 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
   Clock,
-  Heart,
-  ExternalLink,
   ChevronRight,
   Tag,
   Building2,
+  ArrowRight,
+  ExternalLink,
 } from 'lucide-react';
 
 import { compareGame, type GameDetails } from '@/lib/api';
 import { PriceTable } from '@/components/price-table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { CardSpotlight } from '@/components/ui/card-spotlight';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatPrice } from '@/lib/utils';
 import { AddToWishlistButton } from './add-to-wishlist-button';
@@ -44,7 +43,7 @@ export async function generateMetadata({
 }
 
 // ---------------------------------------------------------------------------
-// Placeholder game — used when API is not yet available
+// Placeholder
 // ---------------------------------------------------------------------------
 
 function buildPlaceholderGame(slug: string): GameDetails {
@@ -57,36 +56,15 @@ function buildPlaceholderGame(slug: string): GameDetails {
     name,
     slug,
     description:
-      'TODO: Fetch real game description from the API. This placeholder text is shown when the scrapper service is not reachable.',
+      'Detailed game description will be shown here once the API is connected. This placeholder text is shown when the scrapper service is not reachable.',
     releaseDate: '2024-01-01',
     genres: ['Action', 'RPG'],
     developer: 'Unknown Studio',
     publisher: 'Unknown Publisher',
     stores: [
-      {
-        store: 'steam',
-        price: 39.99,
-        originalPrice: 59.99,
-        currency: 'USD',
-        url: '#',
-        inStock: true,
-      },
-      {
-        store: 'epic',
-        price: 44.99,
-        originalPrice: 59.99,
-        currency: 'USD',
-        url: '#',
-        inStock: true,
-      },
-      {
-        store: 'gog',
-        price: 34.99,
-        originalPrice: 59.99,
-        currency: 'USD',
-        url: '#',
-        inStock: false,
-      },
+      { store: 'steam',     price: 39.99, originalPrice: 59.99, currency: 'USD', url: '#', inStock: true },
+      { store: 'epic',      price: 44.99, originalPrice: 59.99, currency: 'USD', url: '#', inStock: true },
+      { store: 'gog',       price: 34.99, originalPrice: 59.99, currency: 'USD', url: '#', inStock: false },
     ],
   };
 }
@@ -97,159 +75,209 @@ function buildPlaceholderGame(slug: string): GameDetails {
 
 function Breadcrumb({ gameName }: { gameName: string }) {
   return (
-    <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-xs text-on-surface-variant mb-6">
-      <Link href="/" className="hover:text-primary-fixed-dim transition-colors">
-        Home
-      </Link>
+    <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-xs text-on-surface-variant/60 font-body">
+      <Link href="/" className="hover:text-primary-container transition-colors">Home</Link>
       <ChevronRight className="h-3 w-3" aria-hidden="true" />
-      <Link href="/search?q=" className="hover:text-primary-fixed-dim transition-colors">
-        Games
-      </Link>
+      <Link href="/search?q=" className="hover:text-primary-container transition-colors">Games</Link>
       <ChevronRight className="h-3 w-3" aria-hidden="true" />
-      <span className="text-on-surface truncate max-w-[200px]">{gameName}</span>
+      <span className="text-on-surface-variant truncate max-w-[200px]">{gameName}</span>
     </nav>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Game header
+// Cinematic hero — blurred backdrop + floating cover card
 // ---------------------------------------------------------------------------
 
-interface GameHeaderProps {
+interface GameHeroProps {
   game: GameDetails;
 }
 
-function GameHeader({ game }: GameHeaderProps) {
+function GameHero({ game }: GameHeroProps) {
   const lowestStore = [...game.stores]
     .filter((s) => s.inStock && s.price != null)
     .sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity))[0];
 
   return (
-    <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
-      {/* Cover art */}
-      <div className="relative shrink-0 w-full md:w-48 lg:w-56 aspect-[3/4] md:aspect-auto md:h-64 lg:h-72 rounded-xl overflow-hidden bg-surface-container-low ghost-border">
-        {game.coverImage ? (
+    /* Outer cinematic section — full width with blurred art behind */
+    <section className="relative w-full overflow-hidden rounded-2xl mb-8 bg-surface-container-low">
+      {/* Blurred cover art backdrop */}
+      {game.coverImage && (
+        <div className="absolute inset-0" aria-hidden="true">
           <Image
             src={game.coverImage}
-            alt={`${game.name} cover art`}
+            alt=""
             fill
+            sizes="100vw"
+            className="object-cover opacity-15 blur-2xl scale-110"
             priority
-            sizes="(max-width: 768px) 100vw, 224px"
-            className="object-cover"
           />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <span className="font-headline text-5xl font-bold text-on-surface-variant/20 select-none">
-              {game.name.slice(0, 2).toUpperCase()}
-            </span>
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                'linear-gradient(to right, rgba(20,12,12,0.95) 0%, rgba(20,12,12,0.75) 50%, rgba(20,12,12,0.85) 100%)',
+            }}
+          />
+        </div>
+      )}
+
+      {/* Ambient warm blob */}
+      <div
+        className="pointer-events-none absolute -bottom-20 right-0 h-64 w-64 rounded-full opacity-10"
+        style={{ background: 'radial-gradient(circle, #ff9a5d 0%, transparent 70%)' }}
+        aria-hidden="true"
+      />
+
+      {/* 21st.dev CardSpotlight — mouse-tracking warm spotlight across the hero content */}
+      <CardSpotlight
+        className="relative z-10 !rounded-none bg-transparent"
+        radius={450}
+        color="rgba(255, 154, 93, 0.07)"
+      >
+      <div className="flex flex-col md:flex-row gap-6 md:gap-10 p-6 md:p-8 lg:p-10">
+        {/* Floating cover art card */}
+        <div
+          className="shrink-0 w-36 md:w-44 lg:w-52 self-start rounded-2xl overflow-hidden shadow-ambient-lg"
+          style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,154,93,0.10)' }}
+        >
+          <div className="aspect-[3/4] relative bg-surface-container">
+            {game.coverImage ? (
+              <Image
+                src={game.coverImage}
+                alt={`${game.name} cover art`}
+                fill
+                priority
+                sizes="(max-width: 768px) 144px, 208px"
+                className="object-cover"
+              />
+            ) : (
+              <div
+                className="flex h-full w-full items-center justify-center"
+                style={{ background: 'linear-gradient(160deg, #221816 0%, #3d2e2c 100%)' }}
+              >
+                <span
+                  className="font-headline text-5xl font-bold select-none"
+                  style={{ color: 'rgba(255,154,93,0.25)' }}
+                >
+                  {game.name.slice(0, 2).toUpperCase()}
+                </span>
+              </div>
+            )}
           </div>
-        )}
-      </div>
-
-      {/* Info */}
-      <div className="flex-1 flex flex-col gap-3">
-        <h1 className="font-headline text-3xl font-bold text-on-surface leading-tight">
-          {game.name}
-        </h1>
-
-        {/* Meta badges */}
-        <div className="flex flex-wrap items-center gap-2">
-          {game.genres?.map((g) => (
-            <Badge key={g} variant="outline">{g}</Badge>
-          ))}
-          {game.releaseDate && (
-            <div className="flex items-center gap-1 text-xs text-on-surface-variant">
-              <Clock className="h-3 w-3" />
-              {new Date(game.releaseDate).getFullYear()}
-            </div>
-          )}
         </div>
 
-        {/* Developer / publisher */}
-        {(game.developer ?? game.publisher) && (
-          <div className="flex flex-wrap gap-4">
-            {game.developer && (
-              <div className="flex items-center gap-1.5 text-xs text-on-surface-variant">
-                <Building2 className="h-3.5 w-3.5" />
-                <span>
-                  <span className="text-on-surface-variant/60">Dev: </span>
-                  {game.developer}
-                </span>
-              </div>
-            )}
-            {game.publisher && (
-              <div className="flex items-center gap-1.5 text-xs text-on-surface-variant">
-                <Tag className="h-3.5 w-3.5" />
-                <span>
-                  <span className="text-on-surface-variant/60">Pub: </span>
-                  {game.publisher}
-                </span>
+        {/* Game info */}
+        <div className="flex-1 flex flex-col gap-4">
+          {/* Title */}
+          <h1 className="font-headline font-bold text-on-surface leading-tight"
+            style={{ fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)', letterSpacing: '-0.01em' }}
+          >
+            {game.name}
+          </h1>
+
+          {/* Meta — genres + release year + dev/pub */}
+          <div className="flex flex-wrap items-center gap-2">
+            {game.genres?.map((g) => (
+              <span
+                key={g}
+                className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold font-headline"
+                style={{ background: 'rgba(155,126,200,0.12)', color: '#b49bd6' }}
+              >
+                {g}
+              </span>
+            ))}
+            {game.releaseDate && (
+              <div className="flex items-center gap-1 text-xs text-on-surface-variant/60 font-body">
+                <Clock className="h-3 w-3" aria-hidden="true" />
+                {new Date(game.releaseDate).getFullYear()}
               </div>
             )}
           </div>
-        )}
 
-        {/* Description */}
-        {game.description && (
-          <p className="text-sm text-on-surface-variant leading-relaxed line-clamp-3">
-            {game.description}
-          </p>
-        )}
-
-        {/* CTA row */}
-        <div className="flex flex-wrap items-center gap-3 mt-auto pt-2">
-          {lowestStore && (
-            <div className="flex flex-col">
-              <span className="text-xs text-on-surface-variant">Best price</span>
-              <span className="font-headline text-2xl font-bold text-primary-fixed-dim">
-                {formatPrice(lowestStore.price, lowestStore.currency)}
-              </span>
+          {/* Dev / publisher */}
+          {(game.developer ?? game.publisher) && (
+            <div className="flex flex-wrap gap-4">
+              {game.developer && (
+                <div className="flex items-center gap-1.5 text-xs text-on-surface-variant/60 font-body">
+                  <Building2 className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>{game.developer}</span>
+                </div>
+              )}
+              {game.publisher && (
+                <div className="flex items-center gap-1.5 text-xs text-on-surface-variant/60 font-body">
+                  <Tag className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>{game.publisher}</span>
+                </div>
+              )}
             </div>
           )}
 
-          {lowestStore && (
-            <Button size="lg" asChild className="glow-primary">
+          {/* Description */}
+          {game.description && (
+            <p className="text-sm text-on-surface-variant leading-relaxed line-clamp-3 font-body max-w-xl">
+              {game.description}
+            </p>
+          )}
+
+          {/* CTA row */}
+          <div className="flex flex-wrap items-center gap-3 mt-2">
+            {/* Best price display */}
+            {lowestStore && (
+              <div className="flex flex-col">
+                <span className="text-xs text-on-surface-variant/60 font-body">Best price</span>
+                <span className="font-headline text-3xl font-bold" style={{ color: '#ff9a5d' }}>
+                  {formatPrice(lowestStore.price, lowestStore.currency)}
+                </span>
+              </div>
+            )}
+
+            {/* Primary CTA */}
+            {lowestStore && (
               <Link
                 href={lowestStore.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2"
+                className="inline-flex items-center gap-2 h-12 px-6 rounded-2xl btn-sunset font-headline font-semibold text-sm transition-all duration-200 active:scale-[0.97] hover:shadow-glow-primary-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container/50"
               >
-                Buy Now
-                <ExternalLink className="h-4 w-4" />
+                Get Best Deal
+                <ExternalLink className="h-4 w-4" aria-hidden="true" />
               </Link>
-            </Button>
-          )}
+            )}
 
-          {/* Add to wishlist — client island */}
-          <AddToWishlistButton game={game} />
+            {/* Wishlist — client island */}
+            <AddToWishlistButton game={game} />
 
-          <Button variant="tactical" size="lg" asChild>
-            <Link href={`/game/${game.slug}/history`} className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
+            {/* Price history */}
+            <Link
+              href={`/game/${game.slug}/history`}
+              className="inline-flex items-center gap-2 h-12 px-5 rounded-2xl glass ghost-border font-headline font-semibold text-sm text-on-surface transition-all duration-200 hover:bg-surface-container-high focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container/30"
+            >
+              <Clock className="h-4 w-4" aria-hidden="true" />
               Price History
             </Link>
-          </Button>
+          </div>
         </div>
       </div>
-    </div>
+      </CardSpotlight>
+    </section>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Loading skeleton (used in Suspense boundaries if needed)
+// Loading skeleton
 // ---------------------------------------------------------------------------
 
 function GameDetailSkeleton() {
   return (
-    <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8">
-      <Skeleton className="w-full md:w-48 h-64 rounded-xl" />
-      <div className="flex-1 space-y-3">
-        <Skeleton className="h-9 w-3/4" />
-        <Skeleton className="h-5 w-1/2" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-5/6" />
-        <Skeleton className="h-4 w-4/6" />
+    <div className="rounded-2xl bg-surface-container p-8 flex flex-col md:flex-row gap-8">
+      <Skeleton className="w-44 aspect-[3/4] rounded-2xl" />
+      <div className="flex-1 space-y-4">
+        <Skeleton className="h-9 w-3/4 rounded-xl" />
+        <Skeleton className="h-5 w-1/2 rounded-lg" />
+        <Skeleton className="h-4 w-full rounded-lg" />
+        <Skeleton className="h-4 w-5/6 rounded-lg" />
+        <Skeleton className="h-12 w-40 rounded-2xl" />
       </div>
     </div>
   );
@@ -268,55 +296,53 @@ export default async function GamePage({ params }: GamePageProps) {
   let game: GameDetails;
 
   try {
-    /**
-     * TODO: The scrapper service exposes /api/v1/games/compare?name=<name>.
-     * The slug here is URL-encoded, e.g. "elden-ring".
-     * Convert it back to a human title before calling compareGame().
-     *
-     * Example:
-     *   const title = slug.replace(/-/g, ' ');
-     *   game = await compareGame(title);
-     */
     const title = slug.replace(/-/g, ' ');
     game = await compareGame(title);
   } catch {
-    // Gateway or scrapper not reachable — show placeholder with correct name
     game = buildPlaceholderGame(slug);
   }
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 py-8">
-      <Breadcrumb gameName={game.name} />
+    <div className="container mx-auto px-4 sm:px-6 py-8 max-w-4xl">
+      {/* Breadcrumb */}
+      <div className="mb-5">
+        <Breadcrumb gameName={game.name} />
+      </div>
 
-      <GameHeader game={game} />
+      {/* Cinematic hero */}
+      <GameHero game={game} />
 
-      {/* Price comparison table */}
-      <section aria-labelledby="price-comparison-heading">
-        <h2
-          id="price-comparison-heading"
-          className="sr-only"
-        >
-          Price Comparison
-        </h2>
+      {/* Price deal cards */}
+      <section aria-labelledby="price-comparison-heading" className="mb-6">
         <PriceTable stores={game.stores} />
       </section>
 
       {/* History nudge */}
-      <div className="mt-6 rounded-xl bg-surface-container ghost-border p-4 flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <p className="text-sm font-medium text-on-surface">
+      <div className="relative rounded-2xl bg-surface-container overflow-hidden p-5 flex items-center justify-between gap-4 flex-wrap">
+        {/* Subtle blob */}
+        <div
+          className="pointer-events-none absolute -right-8 top-1/2 -translate-y-1/2 h-32 w-32 rounded-full opacity-10"
+          style={{ background: 'radial-gradient(circle, #9b7ec8 0%, transparent 70%)' }}
+          aria-hidden="true"
+        />
+
+        <div className="relative z-10">
+          <p className="text-sm font-semibold text-on-surface font-headline">
             Want to see how prices change over time?
           </p>
-          <p className="text-xs text-on-surface-variant mt-0.5">
-            Check the full price history and set a target price alert.
+          <p className="text-xs text-on-surface-variant font-body mt-0.5">
+            Check the full price history and know the perfect time to buy.
           </p>
         </div>
-        <Button variant="tactical" asChild>
-          <Link href={`/game/${slug}/history`}>
-            View Price History
-          </Link>
-        </Button>
+        <Link
+          href={`/game/${slug}/history`}
+          className="relative z-10 inline-flex items-center gap-2 h-10 px-5 rounded-xl glass ghost-border font-headline font-semibold text-sm text-on-surface transition-all duration-200 hover:bg-surface-container-high whitespace-nowrap"
+        >
+          View History
+          <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+        </Link>
       </div>
     </div>
   );
 }
+

@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';
 
 import { login, type ApiError } from '@/lib/api';
+import { userStore } from '@/lib/user-store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
@@ -65,7 +66,8 @@ export default function LoginPage() {
 
     setIsLoading(true);
     try {
-      await login(email.trim().toLowerCase(), password);
+      const user = await login(email.trim().toLowerCase(), password);
+      userStore.set(user);
       router.push('/');
       router.refresh();
     } catch (err) {

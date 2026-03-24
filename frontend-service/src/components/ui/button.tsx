@@ -4,28 +4,33 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium font-headline transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium font-headline transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 cursor-pointer',
   {
     variants: {
       variant: {
+        // Sunset orange — primary CTA
         default:
-          'bg-primary-container text-primary-on-container font-semibold shadow-glow-primary hover:shadow-glow-primary-lg hover:bg-primary-fixed-dim active:scale-[0.97]',
+          'bg-primary-container text-primary-on-container font-semibold shadow-glow-primary hover:shadow-glow-primary-lg hover:bg-primary-dim active:scale-[0.97]',
         destructive:
-          'bg-error-container text-error hover:bg-error/90',
+          'bg-error-container text-on-surface hover:opacity-90',
+        // Ghost outline — secondary actions
         outline:
-          'ghost-border bg-transparent text-on-surface hover:bg-surface-container-high',
+          'border border-outline-variant/25 bg-transparent text-on-surface hover:bg-surface-container-high hover:border-outline-variant/50',
+        // Lavender secondary
         secondary:
-          'bg-secondary-container text-secondary-on-container hover:bg-secondary-fixed-dim',
+          'bg-secondary-container/20 text-secondary-fixed-dim hover:bg-secondary-container/30',
         ghost:
           'bg-transparent text-on-surface hover:bg-surface-container-high',
-        link: 'text-primary underline-offset-4 hover:underline',
+        link:
+          'text-primary-container underline-offset-4 hover:underline bg-transparent',
+        // Glassmorphic outline — used for secondary nav-adjacent actions
         tactical:
-          'border border-primary-container/40 bg-surface-container text-primary hover:bg-surface-container-high hover:border-primary-container/80 hover:shadow-glow-primary',
+          'glass ghost-border text-on-surface hover:bg-surface-container-high active:scale-[0.97]',
       },
       size: {
-        default: 'h-10 px-4 py-2',
-        sm: 'h-8 rounded-md px-3 text-xs',
-        lg: 'h-12 rounded-xl px-8 text-base',
+        default: 'h-10 px-5 py-2',
+        sm: 'h-8 rounded-lg px-3 text-xs',
+        lg: 'h-12 rounded-2xl px-8 text-base',
         icon: 'h-10 w-10',
         'icon-sm': 'h-8 w-8',
       },

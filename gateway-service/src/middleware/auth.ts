@@ -41,11 +41,12 @@ export async function requireAuth(c: Context, next: Next): Promise<void> {
 
   // Extract userId so downstream middleware (e.g., idempotency) can use it
   try {
-    const session = (await sessionResponse.json()) as {
-      user?: { id?: string };
+    const body = (await sessionResponse.json()) as {
+      data?: { user?: { id?: string } };
     };
-    if (session?.user?.id) {
-      c.set("userId", session.user.id);
+    const userId = body?.data?.user?.id;
+    if (userId) {
+      c.set("userId", userId);
     }
   } catch {
     /* non-fatal — session is valid, userId just won't be set */

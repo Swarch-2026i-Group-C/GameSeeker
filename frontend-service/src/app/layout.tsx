@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from 'next';
+import { Suspense } from 'react';
 import { Lexend, Be_Vietnam_Pro } from 'next/font/google';
 import './globals.css';
 
 import { Navbar } from '@/components/navbar';
+import { RouteProgress } from '@/components/route-progress';
 import { cn } from '@/lib/utils';
 
 // ---------------------------------------------------------------------------
@@ -90,6 +92,10 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-dvh bg-background text-on-surface antialiased">
+        <Suspense fallback={null}>
+          <RouteProgress />
+        </Suspense>
+
         {/* Sanctuary depth — subtle warm/lavender ambient gradients */}
         <div
           className="pointer-events-none fixed inset-0 sanctuary-depth z-0"
@@ -98,7 +104,9 @@ export default function RootLayout({
 
         {/* Content layer */}
         <div className="relative z-10 flex min-h-dvh flex-col">
-          <Navbar />
+          <Suspense fallback={null}>
+            <Navbar />
+          </Suspense>
 
           <main className="flex-1">
             {children}

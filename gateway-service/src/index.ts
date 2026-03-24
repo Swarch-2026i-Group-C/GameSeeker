@@ -11,6 +11,12 @@ import wishlist from "./routes/wishlist.js";
 import events from "./routes/events.js";
 
 const app = new Hono();
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "http://localhost:3001",
+  "http://127.0.0.1:3001",
+].filter(Boolean);
 
 // ---------------------------------------------------------------------------
 // Global middleware
@@ -19,7 +25,10 @@ const app = new Hono();
 app.use(
   "*",
   cors({
-    origin: "http://localhost:3000",
+    origin: (origin) => {
+      if (!origin) return allowedOrigins[0] ?? "";
+      return allowedOrigins.includes(origin) ? origin : "";
+    },
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization", "Cookie"],
     credentials: true,

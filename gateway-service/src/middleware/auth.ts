@@ -1,15 +1,22 @@
 import type { Context, Next } from "hono";
 import { env } from "../lib/env.js";
 
+type AuthVariables = {
+  userId: string;
+};
+
 /**
  * requireAuth middleware.
  *
  * Validates the caller's session by forwarding its credentials to the
- * user-service `/api/auth/session` endpoint. Any non-2xx response is
+ * user-service `/api/auth/get-session` endpoint. Any non-2xx response is
  * treated as unauthenticated and immediately short-circuits with 401.
  */
-export async function requireAuth(c: Context, next: Next): Promise<void> {
-  const sessionUrl = `${env.USER_SERVICE_URL}/auth/session`;
+export async function requireAuth(
+  c: Context<{ Variables: AuthVariables }>,
+  next: Next,
+): Promise<void> {
+  const sessionUrl = `${env.USER_SERVICE_URL}/api/auth/get-session`;
 
   // Forward the headers the upstream auth layer needs to identify the caller.
   const forwardHeaders = new Headers();
@@ -42,9 +49,10 @@ export async function requireAuth(c: Context, next: Next): Promise<void> {
   // Extract userId so downstream middleware (e.g., idempotency) can use it
   try {
     const body = (await sessionResponse.json()) as {
+      user?: { id?: string };
       data?: { user?: { id?: string } };
     };
-    const userId = body?.data?.user?.id;
+    const userId = body?.data?.user?.id ?? body?.user?.id;
     if (userId) {
       c.set("userId", userId);
     }

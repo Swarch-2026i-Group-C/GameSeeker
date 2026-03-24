@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useTransition } from 'react';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
-import { Search, Heart, LogIn, UserPlus, LogOut, Menu } from 'lucide-react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { Search, Heart, LogIn, UserPlus, LogOut, Menu, Loader2 } from 'lucide-react';
 
 import { logout, type AuthUser } from '@/lib/api';
 import { userStore } from '@/lib/user-store';
+import { emitRouteLoadingStart } from '@/components/route-progress';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -84,14 +85,27 @@ interface SearchBarProps {
 
 function SearchBar({ className, onSubmit }: SearchBarProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [query, setQuery] = useState('');
+  const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (pathname === '/search') {
+      setQuery(searchParams.get('q') ?? '');
+    }
+  }, [pathname, searchParams]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = query.trim();
     if (!trimmed) return;
-    router.push(`/search?q=${encodeURIComponent(trimmed)}`);
-    onSubmit?.();
+
+    startTransition(() => {
+      emitRouteLoadingStart();
+      router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+      onSubmit?.();
+    });
   }
 
   return (
@@ -108,9 +122,16 @@ function SearchBar({ className, onSubmit }: SearchBarProps) {
         placeholder="Search games..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        className="pl-9 w-full bg-surface-container-low/80 border-outline-variant/20 focus:border-primary-container/40 focus:ring-primary-container/20 rounded-xl transition-all"
+        className="pl-9 pr-10 w-full bg-surface-container-low/80 border-outline-variant/20 focus:border-primary-container/40 focus:ring-primary-container/20 rounded-xl transition-all"
         aria-label="Search games"
+        aria-busy={isPending}
       />
+      {isPending && (
+        <Loader2
+          className="absolute right-3 h-4 w-4 animate-spin text-primary-container pointer-events-none"
+          aria-hidden="true"
+        />
+      )}
     </form>
   );
 }

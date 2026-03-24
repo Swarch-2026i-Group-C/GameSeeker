@@ -10,10 +10,9 @@ import { Heart, Loader2, Check } from 'lucide-react';
 
 import {
   addToWishlist,
+  getSession,
   getWishlist,
   removeFromWishlist,
-  // TODO: Re-enable getSession once better-auth session validation is fixed.
-  // getSession,
   type GameDetails,
   type ApiError,
 } from '@/lib/api';
@@ -30,13 +29,18 @@ export function AddToWishlistButton({ game }: AddToWishlistButtonProps) {
   const [state, setState] = useState<State>('loading');
   const [wishlistGameId, setWishlistGameId] = useState<string | null>(null);
 
-  // On mount: check if game is already in wishlist.
-  // TODO: Re-add getSession() check + 'unauthenticated' guard once better-auth session validation is fixed.
+  // On mount: validate the current session, then check if the game is already wishlisted.
   useEffect(() => {
     let cancelled = false;
 
     async function init() {
       try {
+        const session = await getSession();
+        if (!session) {
+          if (!cancelled) setState('unauthenticated');
+          return;
+        }
+
         const wishlist = await getWishlist();
         const existing = wishlist.games.find((g) => g.slug === game.slug);
         if (!cancelled) {
@@ -47,8 +51,15 @@ export function AddToWishlistButton({ game }: AddToWishlistButtonProps) {
             setState('idle');
           }
         }
-      } catch {
-        if (!cancelled) setState('idle');
+      } catch (err) {
+        const apiErr = err as ApiError;
+        if (!cancelled) {
+          if (apiErr.status === 401 || apiErr.status === 403) {
+            setState('unauthenticated');
+          } else {
+            setState('idle');
+          }
+        }
       }
     }
 

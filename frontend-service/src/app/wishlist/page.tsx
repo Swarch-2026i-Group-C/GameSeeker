@@ -25,12 +25,13 @@ import { usePriceUpdates } from '@/hooks/usePriceUpdates';
 import { formatPrice, storeLabel } from '@/lib/utils';
 
 import {
+  getSession,
   getWishlist,
   removeFromWishlist,
+  type AuthUser,
   type WishlistGame,
   type ApiError,
 } from '@/lib/api';
-import { userStore } from '@/lib/user-store';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -211,7 +212,7 @@ function WishlistRow({ game, onRemove, isRemoving }: WishlistRowProps) {
 export default function WishlistPage() {
   const router = useRouter();
 
-  const user = userStore.get();
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [games, setGames] = useState<WishlistGame[]>([]);
   const [pageState, setPageState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState('');
@@ -222,6 +223,13 @@ export default function WishlistPage() {
   useEffect(() => {
     async function load() {
       try {
+        const session = await getSession();
+        if (!session) {
+          router.replace('/auth/login');
+          return;
+        }
+
+        setUser(session.user);
         const wishlist = await getWishlist();
         setGames(wishlist.games);
         setPageState('ready');

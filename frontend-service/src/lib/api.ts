@@ -127,7 +127,6 @@ export interface Session {
   expiresAt: string;
 }
 
-
 export interface ApiError {
   message: string;
   status: number;
@@ -229,12 +228,46 @@ export async function getTrending(store: string): Promise<TrendingGame[]> {
 // Auth endpoints (user-service via gateway)
 // ---------------------------------------------------------------------------
 
-interface LoginApiResponse {
-  success: boolean;
-  data: {
-    user: AuthUser & { createdAt?: string; updatedAt?: string };
-    token: string;
-  };
+type AuthUserPayload = AuthUser & {
+  createdAt?: string;
+  updatedAt?: string;
+  emailVerified?: boolean;
+};
+
+type LoginApiResponse =
+  | {
+      redirect?: boolean;
+      token: string;
+      user: AuthUserPayload;
+    }
+  | {
+      success: boolean;
+      data: {
+        user: AuthUserPayload;
+        token: string;
+      };
+    };
+
+type SessionApiResponse =
+  | {
+      user: AuthUser;
+      session: {
+        expiresAt: string;
+      };
+    }
+  | {
+      success: boolean;
+      data: {
+        user: AuthUser;
+        session: {
+          expiresAt: string;
+        };
+      };
+    };
+
+function normalizeAuthUser(user: AuthUserPayload): AuthUser {
+  const { id, name, email, image } = user;
+  return { id, name, email, image: image ?? undefined };
 }
 
 /**
@@ -252,8 +285,9 @@ export async function login(
       body: JSON.stringify({ email, password }),
     },
   );
-  const { id, name, email: userEmail, image } = res.data.user;
-  return { id, name, email: userEmail, image: image ?? undefined };
+
+  const user = 'data' in res ? res.data.user : res.user;
+  return normalizeAuthUser(user);
 }
 
 /**
@@ -292,7 +326,13 @@ export async function logout(): Promise<void> {
  */
 export async function getSession(): Promise<Session | null> {
   try {
-    return await apiFetch<Session>('/api/auth/get-session');
+    const raw = await apiFetch<SessionApiResponse>('/api/auth/get-session');
+    const data = 'data' in raw ? raw.data : raw;
+
+    return {
+      user: data.user,
+      expiresAt: data.session.expiresAt,
+    };
   } catch (err) {
     const apiErr = err as ApiError;
     if (apiErr.status === 401 || apiErr.status === 403) return null;

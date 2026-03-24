@@ -1,11 +1,10 @@
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
-// TODO: Re-enable requireAuth once the better-auth get-session 401 is resolved.
-// import { requireAuth } from "../middleware/auth.js";
+import { requireAuth } from "../middleware/auth.js";
 import { priceUpdateBus, type PriceUpdate } from "../lib/rabbitmq.js";
 import { env } from "../lib/env.js";
 
-const events = new Hono();
+const events = new Hono<{ Variables: { userId: string } }>();
 
 /**
  * GET /api/events/stream
@@ -20,17 +19,24 @@ const events = new Hono();
  *   4. Forward only events whose slug is in the watched set.
  *   5. Send a keepalive ping every 30 s to prevent proxy timeouts.
  */
-// TODO: Add requireAuth back as second argument once session validation is fixed.
-events.get("/stream", async (c) => {
+events.get("/stream", requireAuth, async (c) => {
   // Build the set of slugs this user cares about
   const watchedSlugs = new Set<string>();
+  const userId = c.get("userId") as string | undefined;
+
   try {
-    const res = await fetch(`${env.USER_SERVICE_URL}/wishlist`, {
-      headers: { cookie: c.req.header("cookie") ?? "" },
+    const params = new URLSearchParams();
+    if (userId) params.set("userId", userId);
+    const res = await fetch(`${env.USER_SERVICE_URL}/wishlist?${params.toString()}`, {
+      headers: { "Content-Type": "application/json" },
     });
     if (res.ok) {
-      const wl = (await res.json()) as { games?: Array<{ slug: string }> };
-      wl.games?.forEach((g) => watchedSlugs.add(g.slug));
+      const wl = (await res.json()) as {
+        data?: { games?: Array<{ gameId?: string }> } | null;
+      };
+      wl.data?.games?.forEach((g) => {
+        if (g.gameId) watchedSlugs.add(g.gameId);
+      });
     }
   } catch {
     // If we can't fetch the wishlist, stream proceeds with empty filter

@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, UserPlus, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 import { signup, type ApiError } from '@/lib/api';
+import { userStore } from '@/lib/user-store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
@@ -135,7 +136,8 @@ export default function SignupPage() {
 
     setIsLoading(true);
     try {
-      await signup(name.trim(), email.trim().toLowerCase(), password);
+      const user = await signup(name.trim(), email.trim().toLowerCase(), password);
+      userStore.set(user);
       router.push('/');
       router.refresh();
     } catch (err) {

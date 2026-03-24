@@ -12,7 +12,8 @@ import {
   addToWishlist,
   getWishlist,
   removeFromWishlist,
-  getSession,
+  // TODO: Re-enable getSession once better-auth session validation is fixed.
+  // getSession,
   type GameDetails,
   type ApiError,
 } from '@/lib/api';
@@ -29,18 +30,13 @@ export function AddToWishlistButton({ game }: AddToWishlistButtonProps) {
   const [state, setState] = useState<State>('loading');
   const [wishlistGameId, setWishlistGameId] = useState<string | null>(null);
 
-  // On mount: check if authenticated and if game is already in wishlist
+  // On mount: check if game is already in wishlist.
+  // TODO: Re-add getSession() check + 'unauthenticated' guard once better-auth session validation is fixed.
   useEffect(() => {
     let cancelled = false;
 
     async function init() {
       try {
-        const session = await getSession();
-        if (!session) {
-          if (!cancelled) setState('unauthenticated');
-          return;
-        }
-
         const wishlist = await getWishlist();
         const existing = wishlist.games.find((g) => g.slug === game.slug);
         if (!cancelled) {

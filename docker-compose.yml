@@ -21,6 +21,9 @@ services:
       - "4000:4000"
     env_file:
       - ./user-service/.env
+    environment:
+      BETTER_AUTH_URL: http://localhost:4000
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/users_db
     depends_on:
       - postgres
     networks:

@@ -5,12 +5,12 @@ import {
   AddGameSuccess,
   DeleteGameSuccess,
   ErrorResponse,
-  GetWishlistSuccess,
   GetDistinctGamesSuccess,
-  UpdateGamePricesSchema,
-  UpdateGamePricesSuccess,
   GetGameSubscribersSchema,
   GetGameSubscribersSuccess,
+  GetWishlistSuccess,
+  UpdateGamePricesSchema,
+  UpdateGamePricesSuccess,
 } from "../schemas/wishlist.schema.js";
 
 const wishlistRoutes = new OpenAPIHono();
@@ -164,7 +164,9 @@ const getDistinctGamesRoute = createRoute({
   },
 });
 
-wishlistRoutes.openapi(getDistinctGamesRoute, (c) => wishlistController.getDistinctGames(c));
+wishlistRoutes.openapi(getDistinctGamesRoute, (c) =>
+  wishlistController.getDistinctGames(c),
+);
 
 const updateGamePricesRoute = createRoute({
   method: "patch",
@@ -192,7 +194,9 @@ const updateGamePricesRoute = createRoute({
   },
 });
 
-wishlistRoutes.openapi(updateGamePricesRoute, (c) => wishlistController.updateGamePrices(c));
+wishlistRoutes.openapi(updateGamePricesRoute, (c) =>
+  wishlistController.updateGamePrices(c),
+);
 
 const getSubscribersRoute = createRoute({
   method: "post",
@@ -216,6 +220,8 @@ const getSubscribersRoute = createRoute({
   },
 });
 
-wishlistRoutes.openapi(getSubscribersRoute, (c) => wishlistController.getSubscribers(c));
+wishlistRoutes.openapi(getSubscribersRoute, (c) =>
+  wishlistController.getSubscribers(c),
+);
 
 export default wishlistRoutes;

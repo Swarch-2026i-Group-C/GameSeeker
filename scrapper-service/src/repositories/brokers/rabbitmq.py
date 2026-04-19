@@ -31,6 +31,7 @@ class RabbitMQProducer(BaseProducer):
             self.channel.confirm_delivery()
             self.channel.queue_declare(queue=self.queue_name, durable=True)
             self.channel.queue_declare(queue=self.notification_queue, durable=True)
+            self.channel.queue_declare(queue="ranking_prices_queue", durable=True)
             logger.info(f"Connected to RabbitMQ at {self.host}:{self.port}")
         except Exception as e:
             logger.error(f"Failed to connect to RabbitMQ: {e}")
@@ -47,6 +48,14 @@ class RabbitMQProducer(BaseProducer):
                 self.channel.basic_publish(
                     exchange='',
                     routing_key=self.queue_name,
+                    body=message,
+                    properties=pika.BasicProperties(
+                        delivery_mode=2,
+                    )
+                )
+                self.channel.basic_publish(
+                    exchange='',
+                    routing_key="ranking_prices_queue",
                     body=message,
                     properties=pika.BasicProperties(
                         delivery_mode=2,

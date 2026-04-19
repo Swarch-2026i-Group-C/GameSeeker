@@ -10,8 +10,13 @@ services:
       - FLASK_ENV=production
       - PYTHONUNBUFFERED=1
       - SCRAPPER_LOOP_INTERVAL_MINUTES=2
-      - RABBITMQ_HOST=rabbitmq
       - USER_SERVICE_URL=http://user-service:4000
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+    depends_on:
+      - rabbitmq
     networks:
       - app-network
     restart: unless-stopped
@@ -85,6 +90,29 @@ services:
       RABBITMQ_PASSWORD: guest
       NOTIFICATION_QUEUE: notification_queue
     depends_on:
+      - rabbitmq
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  ranking-service:
+    build:
+      context: ./ranking-service
+      dockerfile: Dockerfile
+    container_name: ranking-service
+    ports:
+      - "6001:6001"
+    environment:
+      SERVER_PORT: 6001
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      RABBITMQ_RANKING_QUEUE: ranking_prices_queue
+    depends_on:
+      - redis
       - rabbitmq
     networks:
       - app-network

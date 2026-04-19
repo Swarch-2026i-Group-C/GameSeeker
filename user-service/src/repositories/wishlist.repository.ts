@@ -37,7 +37,7 @@ export const wishlistRepository = {
   async getAllDistinctGames() {
     const games = await prisma.game.findMany({
       select: { gameName: true },
-      distinct: ['gameName'],
+      distinct: ["gameName"],
     });
     return games.map((g) => g.gameName);
   },
@@ -47,7 +47,7 @@ export const wishlistRepository = {
     priceCents: number | null,
     originalPriceCents: number | null,
     currency: string | null,
-    store: string | null
+    store: string | null,
   ) {
     return prisma.game.updateMany({
       where: { gameName },
@@ -55,7 +55,7 @@ export const wishlistRepository = {
         priceCents,
         originalPriceCents,
         currency,
-        store
+        store,
       },
     });
   },
@@ -67,14 +67,17 @@ export const wishlistRepository = {
         wishlist: {
           include: {
             user: {
-              select: { id: true, name: true, email: true }
-            }
-          }
-        }
-      }
+              select: { id: true, name: true, email: true },
+            },
+          },
+        },
+      },
     });
 
-    const result: Record<string, {id: string, name: string, email: string}[]> = {};
+    const result: Record<
+      string,
+      { id: string; name: string; email: string }[]
+    > = {};
     for (const name of gameNames) {
       result[name] = [];
     }
@@ -82,7 +85,9 @@ export const wishlistRepository = {
     for (const game of games) {
       if (game.wishlist && game.wishlist.user) {
         // Ensure no duplicate users for the same game
-        if (!result[game.gameName].some(u => u.id === game.wishlist.user.id)) {
+        if (
+          !result[game.gameName].some((u) => u.id === game.wishlist.user.id)
+        ) {
           result[game.gameName].push(game.wishlist.user);
         }
       }

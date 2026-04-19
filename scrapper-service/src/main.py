@@ -65,7 +65,36 @@ def run_wishlist_pipeline(producer):
     user_client.update_game_prices(price_updates)
 
     producer.publish(all_games)
-    logger.info("Cycle finished.")
+    logger.info("Wishlist Cycle finished.")
+
+def run_trending_pipeline(producer):
+    logger.info("=== Running Trending Games Pipeline ===")
+    
+    all_trending = []
+    
+    try:
+        steam_trending = game_service.get_trending_games("steam")
+        if steam_trending:
+            all_trending.extend(steam_trending)
+            logger.info(f"Got {len(steam_trending)} trending games from Steam")
+    except Exception as e:
+        logger.error(f"Error getting Steam trending: {e}")
+        
+    try:
+        gog_trending = game_service.get_trending_games("gog")
+        if gog_trending:
+            all_trending.extend(gog_trending)
+            logger.info(f"Got {len(gog_trending)} trending games from GOG")
+    except Exception as e:
+        logger.error(f"Error getting GOG trending: {e}")
+        
+    if all_trending:
+        logger.info(f"Publishing {len(all_trending)} trending games to RabbitMQ")
+        producer.publish(all_trending)
+    else:
+        logger.info("No trending games found.")
+        
+    logger.info("Trending Cycle finished.")
 
 def main():
     logger.info("Starting Game Price Scraper (Wishlist Loop Mode)...")
@@ -73,10 +102,29 @@ def main():
     logger.info(f"Loop interval configured to {Config.LOOP_INTERVAL_MINUTES} minutes.")
     
     producer = RabbitMQProducer()
+    
+    connected = False
+    while not connected:
+        try:
+            producer.connect()
+            connected = True
+            logger.info("Successfully connected to RabbitMQ.")
+        except Exception as e:
+            logger.error(f"Failed to connect to RabbitMQ, retrying in 5 seconds...: {e}")
+            time.sleep(5)
+            
     try:
-        producer.connect()
         while True:
-            run_wishlist_pipeline(producer)
+            try:
+                run_wishlist_pipeline(producer)
+            except Exception as e:
+                logger.error(f"Error running wishlist pipeline: {e}")
+                
+            try:
+                run_trending_pipeline(producer)
+            except Exception as e:
+                logger.error(f"Error running trending pipeline: {e}")
+                
             logger.info(f"Sleeping for {sleep_seconds} seconds before next cycle...")
             time.sleep(sleep_seconds)
     except KeyboardInterrupt:

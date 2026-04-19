@@ -6,9 +6,9 @@
 
 GameSeeker is a web application designed to help gamers find the best prices for their favorite games across multiple digital storefronts (Steam, Epic Games, GOG, etc.) and manage a centralized wishlist. 
 
-This project is built using a **Microservices Architecture** to ensure scalability, modularity, and separation of concerns.
+This project is built using a **Service-Oriented architecture** to ensure scalability, modularity, and separation of concerns.
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
 The system is composed of four main services and two backing services orchestrated via Docker Compose:
 
@@ -69,8 +69,7 @@ This section contains the formal architectural documentation required for the Pr
 ### 3.2. Description of Architectural Styles Used
 The GameSeeker ecosystem relies on a hybrid architecture that incorporates multiple styles to ensure scalability, low coupling, and reactivity:
 
-- **Microservices Architecture:** The system separates domains (e.g., user authentication versus web scraping) into independent services. This allows us to scale components based on what they individually need—fast network I/O or heavy CPU processing mapping algorithms.
-- **API Gateway Pattern:** We expose the hidden cluster behind a single external boundary on port `:8080` (Gateway Service), unifying security, rate limiting, and CORS routing logically in one place to protect the backend.
+- **Service-Oriented architecture:** The system separates domains (e.g., user authentication versus web scraping) into independent services. This allows us to scale components based on what they individually need—fast network I/O or heavy CPU processing mapping algorithms.
 - **Publish-Subscribe (Pub/Sub):** Mediated by RabbitMQ, this pattern handles asynchronous messages. It spatially decouples the service that produces unpredictable data (the scraper tracking worldwide deals) from the service that consumes and visualizes it (the gateway and browser).
 - **Client-Server & Layered:** There is a strict layered separation between the client browser (View level) and the backend server layer, protecting our databases from external access.
 - **Pipe and Filter:** Incoming HTTP requests pass through a sequential pipeline of middleware restrictions internally in the Gateway (`CORS -> Auth Validation -> Rate Limiter -> Idempotency Check -> Route Handler`).

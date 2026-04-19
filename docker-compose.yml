@@ -1,9 +1,9 @@
 services:
-  game-scraper:
+  scrapper-service:
     build:
       context: ./scrapper-service
       dockerfile: Dockerfile
-    container_name: game-scraper
+    container_name: scrapper-service
     ports:
       - "5010:5000"
     environment:
@@ -65,6 +65,28 @@ services:
       - app-network
     restart: unless-stopped
 
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: notification-service
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./notification-service/.env  
+    environment:
+      PORT: 3001
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      NOTIFICATION_QUEUE: notification_queue
+    depends_on:
+      - rabbitmq
+    networks:
+      - app-network
+    restart: unless-stopped
+
   gateway-service:
     build:
       context: ./gateway-service
@@ -75,7 +97,7 @@ services:
     environment:
       PORT: 8080
       USER_SERVICE_URL: http://user-service:4000
-      SCRAPPER_SERVICE_URL: http://game-scraper:5000
+      SCRAPPER_SERVICE_URL: http://scrapper-service:5000
       REDIS_URL: redis://redis:6379
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
@@ -84,7 +106,7 @@ services:
       RABBITMQ_QUEUE: game_prices_queue
     depends_on:
       - user-service
-      - game-scraper
+      - scrapper-service
       - redis
       - rabbitmq
     networks:

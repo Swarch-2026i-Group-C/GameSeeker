@@ -14,6 +14,10 @@ export const GameSchema = z
     gameId: z.string(),
     gameName: z.string(),
     addedAt: z.string(),
+    priceCents: z.number().nullable().optional(),
+    originalPriceCents: z.number().nullable().optional(),
+    currency: z.string().nullable().optional(),
+    store: z.string().nullable().optional(),
   })
   .openapi("Game");
 
@@ -52,3 +56,31 @@ export const ErrorResponse = z
     message: z.string(),
   })
   .openapi("ErrorResponse");
+
+export const GetDistinctGamesSuccess = z
+  .object({
+    success: z.literal(true),
+    data: z.array(z.string()),
+  })
+  .openapi("GetDistinctGamesSuccess");
+
+export const GamePriceUpdateSchema = z.object({
+  gameName: z.string(),
+  priceCents: z.number().nullable(),
+  originalPriceCents: z.number().nullable(),
+  currency: z.string().nullable(),
+  store: z.string().nullable(),
+});
+
+export const UpdateGamePricesSchema = z
+  .object({
+    updates: z.array(GamePriceUpdateSchema),
+  })
+  .openapi("UpdateGamePricesBody");
+
+export const UpdateGamePricesSuccess = z
+  .object({
+    success: z.literal(true),
+    message: z.string(),
+  })
+  .openapi("UpdateGamePricesSuccess");

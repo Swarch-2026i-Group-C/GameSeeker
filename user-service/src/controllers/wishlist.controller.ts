@@ -63,4 +63,30 @@ export const wishlistController = {
       return c.json({ success: false, message }, 500);
     }
   },
+
+  async getDistinctGames(c: Context) {
+    try {
+      const games = await wishlistService.getAllDistinctGames();
+      return c.json({ success: true, data: games }, 200);
+    } catch (error: unknown) {
+       const message = error instanceof Error ? error.message : "Error fetching games";
+       return c.json({ success: false, message }, 500);
+    }
+  },
+
+  async updateGamePrices(c: Context) {
+    try {
+      const body = await c.req.json();
+      const updates = body.updates;
+      if (!Array.isArray(updates)) {
+        return c.json({ success: false, message: "updates array is required" }, 400);
+      }
+      
+      await wishlistService.updateGamePrices(updates);
+      return c.json({ success: true, message: "Prices updated successfully" }, 200);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Error updating prices";
+      return c.json({ success: false, message }, 500);
+    }
+  }
 };

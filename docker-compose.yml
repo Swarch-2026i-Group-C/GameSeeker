@@ -9,6 +9,9 @@ services:
     environment:
       - FLASK_ENV=production
       - PYTHONUNBUFFERED=1
+      - SCRAPPER_LOOP_INTERVAL_MINUTES=2
+      - RABBITMQ_HOST=rabbitmq
+      - USER_SERVICE_URL=http://user-service:4000
     networks:
       - app-network
     restart: unless-stopped

@@ -6,6 +6,9 @@ import {
   DeleteGameSuccess,
   ErrorResponse,
   GetWishlistSuccess,
+  GetDistinctGamesSuccess,
+  UpdateGamePricesSchema,
+  UpdateGamePricesSuccess,
 } from "../schemas/wishlist.schema.js";
 
 const wishlistRoutes = new OpenAPIHono();
@@ -141,5 +144,52 @@ const deleteGameRoute = createRoute({
 wishlistRoutes.openapi(deleteGameRoute, (c) =>
   wishlistController.deleteGame(c),
 );
+
+const getDistinctGamesRoute = createRoute({
+  method: "get",
+  path: "/games",
+  tags: ["Wishlist"],
+  summary: "Get all distinct games tracked across all wishlists",
+  responses: {
+    200: {
+      description: "Games fetched successfully",
+      content: { "application/json": { schema: GetDistinctGamesSuccess } },
+    },
+    500: {
+      description: "Server error",
+      content: { "application/json": { schema: ErrorResponse } },
+    },
+  },
+});
+
+wishlistRoutes.openapi(getDistinctGamesRoute, (c) => wishlistController.getDistinctGames(c));
+
+const updateGamePricesRoute = createRoute({
+  method: "patch",
+  path: "/prices",
+  tags: ["Wishlist"],
+  summary: "Update prices for games tracked in wishlists",
+  request: {
+    body: {
+      content: { "application/json": { schema: UpdateGamePricesSchema } },
+    },
+  },
+  responses: {
+    200: {
+      description: "Prices updated successfully",
+      content: { "application/json": { schema: UpdateGamePricesSuccess } },
+    },
+    400: {
+      description: "Invalid request body",
+      content: { "application/json": { schema: ErrorResponse } },
+    },
+    500: {
+      description: "Server error",
+      content: { "application/json": { schema: ErrorResponse } },
+    },
+  },
+});
+
+wishlistRoutes.openapi(updateGamePricesRoute, (c) => wishlistController.updateGamePrices(c));
 
 export default wishlistRoutes;

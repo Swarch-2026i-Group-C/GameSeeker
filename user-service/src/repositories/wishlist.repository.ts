@@ -33,4 +33,30 @@ export const wishlistRepository = {
       where: { id },
     });
   },
+
+  async getAllDistinctGames() {
+    const games = await prisma.game.findMany({
+      select: { gameName: true },
+      distinct: ['gameName'],
+    });
+    return games.map((g) => g.gameName);
+  },
+
+  async updateGamePrices(
+    gameName: string,
+    priceCents: number | null,
+    originalPriceCents: number | null,
+    currency: string | null,
+    store: string | null
+  ) {
+    return prisma.game.updateMany({
+      where: { gameName },
+      data: {
+        priceCents,
+        originalPriceCents,
+        currency,
+        store
+      },
+    });
+  },
 };

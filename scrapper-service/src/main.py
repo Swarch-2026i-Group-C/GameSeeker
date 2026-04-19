@@ -3,6 +3,10 @@ from services.game_service import GameService
 from services.discount_service import DiscountService
 from repositories.brokers.rabbitmq import RabbitMQProducer
 from repositories.brokers.print import PrintBroker
+from services.user_service_client import UserServiceClient
+import time
+from config import Config
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -11,75 +15,70 @@ logger = logging.getLogger(__name__)
 
 game_service = GameService()
 discount_service = DiscountService()
+user_client = UserServiceClient()
 
-test_games = [
-    "The Witcher 3 Wild Hunt",
-    "Cyberpunk 2077",
-    "Hollow Knight",
-    "Baldurs Gate 3",
-    "Stardew Valley",
-]
-
-def test_search_methods():
-    """Test the search method via GameService with known games."""
-    logger.info("=== Testing Search Methods via GameService ===")
-
-    for game in test_games:
-        logger.info(f"\n--- Searching for '{game}' across all stores ---")
-        results = game_service.search_all_stores(game)
-        if results:
-            for result in results:
-                price = result["price_cents"] / 100
-                logger.info(
-                    f"Found on {result['store']}: {result['name']} "
-                    f"-> ${price:,.2f} {result['currency']}"
-                )
-                logger.info(f"  URL: {result['url']}")
-        else:
-            logger.info(f"Not found on any store")
-
-def test_comparator():
-    """Test the price comparison via GameService."""
-    logger.info("=== Testing Price Comparator via GameService ===")
-    results = game_service.bulk_compare(test_games)
-    game_service.comparator.print_comparison(results)
-
-def run_full_pipeline():
-    """Run the scraping pipeline for trending games."""
-    logger.info("=== Running Trending Games Pipeline ===")
-    producer = RabbitMQProducer()
-
-    try:
-        producer.connect()
-        all_games = []
-        for store in ["steam", "gog"]:
-            logger.info(f"Scraping trending games from {store}...")
-            games = game_service.get_trending_games(store)
-            all_games.extend(games)
-
-        logger.info(f"Total games scraped: {len(all_games)}")
+def run_wishlist_pipeline(producer):
+    logger.info("=== Running Wishlist Pricing Pipeline ===")
+    
+    wishlist_games = user_client.get_wishlist_games()
+    if not wishlist_games:
+        logger.info("No wishlist games found. Skipping this cycle.")
+        return
         
-        discounted_games = discount_service.process_discounts(all_games)
-        if discounted_games:
-            logger.info(f"Found {len(discounted_games)} new discounts! Publishing to notification queue...")
-            producer.publish_notification(discounted_games)
+    logger.info(f"Retrieved {len(wishlist_games)} distinct games to scrape.")
+    all_games = []
+    
+    for game_name in wishlist_games:
+        logger.info(f"Scraping prices for: {game_name}")
+        results = game_service.search_all_stores(game_name)
+        if results:
+            valid_results = [r for r in results if r and "price_cents" in r]
+            if valid_results:
+                best = min(valid_results, key=lambda x: x["price_cents"])
+                best["name"] = game_name 
+                all_games.append(best)
+    
+    logger.info(f"Successfully scraped prices for {len(all_games)} games.")
+    if not all_games:
+        return
+        
+    discounted_games = discount_service.process_discounts(all_games)
+    if discounted_games:
+        logger.info(f"Found {len(discounted_games)} new discounts! Publishing to notification queue...")
+        producer.publish_notification(discounted_games)
+        
+    price_updates = []
+    for g in all_games:
+        price_updates.append({
+            "gameName": g["name"],
+            "priceCents": g.get("price_cents"),
+            "originalPriceCents": g.get("original_price_cents"),
+            "currency": g.get("currency"),
+            "store": g.get("store")
+        })
+    user_client.update_game_prices(price_updates)
 
-        producer.publish(all_games)
-        logger.info("Successfully published all games to the main message broker.")
-
-    except Exception as e:
-        logger.error(f"An error occurred during execution: {e}")
-    finally:
-        producer.close()
-        logger.info("Scraper finished.")
+    producer.publish(all_games)
+    logger.info("Cycle finished.")
 
 def main():
-    logger.info("Starting Game Price Scraper (Layered Architecture)...")
+    logger.info("Starting Game Price Scraper (Wishlist Loop Mode)...")
+    sleep_seconds = Config.LOOP_INTERVAL_MINUTES * 60
+    logger.info(f"Loop interval configured to {Config.LOOP_INTERVAL_MINUTES} minutes.")
     
-    # test_search_methods()
-    # test_comparator()
-    
-    run_full_pipeline()
+    producer = RabbitMQProducer()
+    try:
+        producer.connect()
+        while True:
+            run_wishlist_pipeline(producer)
+            logger.info(f"Sleeping for {sleep_seconds} seconds before next cycle...")
+            time.sleep(sleep_seconds)
+    except KeyboardInterrupt:
+        logger.info("Interrupted. Shutting down...")
+    except Exception as e:
+        logger.error(f"Fatal error: {e}")
+    finally:
+        producer.close()
 
 if __name__ == "__main__":
     main()

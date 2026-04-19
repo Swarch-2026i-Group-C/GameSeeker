@@ -61,20 +61,26 @@ class RabbitMQProducer(BaseProducer):
             logger.error("Cannot publish notification. Not connected to RabbitMQ.")
             return
 
-        for game in games:
-            try:
-                message = json.dumps(game)
-                self.channel.basic_publish(
-                    exchange='',
-                    routing_key=self.notification_queue,
-                    body=message,
-                    properties=pika.BasicProperties(
-                        delivery_mode=2,
-                    )
+        if not games:
+            return
+
+        try:
+            payload = {
+                "discounts": games,
+                "count": len(games)
+            }
+            message = json.dumps(payload)
+            self.channel.basic_publish(
+                exchange='',
+                routing_key=self.notification_queue,
+                body=message,
+                properties=pika.BasicProperties(
+                    delivery_mode=2,
                 )
-                logger.info(f"Published drop notification for: {game.get('name')}")
-            except Exception as e:
-                logger.error(f"Failed to publish notification: {e}")
+            )
+            logger.info(f"Published 1 drop notification batched with {len(games)} games.")
+        except Exception as e:
+            logger.error(f"Failed to publish batched notification: {e}")
 
     def close(self):
         if self.connection and not self.connection.is_closed:

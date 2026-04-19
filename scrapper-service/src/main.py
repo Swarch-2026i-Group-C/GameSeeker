@@ -1,5 +1,8 @@
 import logging
-
+from services.game_service import GameService
+from services.discount_service import DiscountService
+from repositories.brokers.rabbitmq import RabbitMQProducer
+from repositories.brokers.print import PrintBroker
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -7,6 +10,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 game_service = GameService()
+discount_service = DiscountService()
 
 test_games = [
     "The Witcher 3 Wild Hunt",
@@ -43,7 +47,7 @@ def test_comparator():
 def run_full_pipeline():
     """Run the scraping pipeline for trending games."""
     logger.info("=== Running Trending Games Pipeline ===")
-    producer = PrintBroker()
+    producer = RabbitMQProducer()
 
     try:
         producer.connect()
@@ -54,8 +58,14 @@ def run_full_pipeline():
             all_games.extend(games)
 
         logger.info(f"Total games scraped: {len(all_games)}")
+        
+        discounted_games = discount_service.process_discounts(all_games)
+        if discounted_games:
+            logger.info(f"Found {len(discounted_games)} new discounts! Publishing to notification queue...")
+            producer.publish_notification(discounted_games)
+
         producer.publish(all_games)
-        logger.info("Successfully published all games to the message broker.")
+        logger.info("Successfully published all games to the main message broker.")
 
     except Exception as e:
         logger.error(f"An error occurred during execution: {e}")
@@ -66,11 +76,10 @@ def run_full_pipeline():
 def main():
     logger.info("Starting Game Price Scraper (Layered Architecture)...")
     
-
-    test_search_methods()
-
-
-    test_comparator()
+    # test_search_methods()
+    # test_comparator()
+    
+    run_full_pipeline()
 
 if __name__ == "__main__":
     main()

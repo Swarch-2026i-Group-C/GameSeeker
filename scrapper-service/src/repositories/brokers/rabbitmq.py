@@ -14,6 +14,7 @@ class RabbitMQProducer(BaseProducer):
         self.user = Config.RABBITMQ_USER
         self.password = Config.RABBITMQ_PASSWORD
         self.queue_name = Config.QUEUE_NAME
+        self.notification_queue = Config.NOTIFICATION_QUEUE_NAME
         self.connection = None
         self.channel = None
 
@@ -27,7 +28,9 @@ class RabbitMQProducer(BaseProducer):
             )
             self.connection = pika.BlockingConnection(parameters)
             self.channel = self.connection.channel()
+            self.channel.confirm_delivery()
             self.channel.queue_declare(queue=self.queue_name, durable=True)
+            self.channel.queue_declare(queue=self.notification_queue, durable=True)
             logger.info(f"Connected to RabbitMQ at {self.host}:{self.port}")
         except Exception as e:
             logger.error(f"Failed to connect to RabbitMQ: {e}")
@@ -52,6 +55,26 @@ class RabbitMQProducer(BaseProducer):
                 logger.debug(f"Published game: {game.get('name')}")
             except Exception as e:
                 logger.error(f"Failed to publish message: {e}")
+
+    def publish_notification(self, games: List[Dict[str, Any]]):
+        if not self.channel:
+            logger.error("Cannot publish notification. Not connected to RabbitMQ.")
+            return
+
+        for game in games:
+            try:
+                message = json.dumps(game)
+                self.channel.basic_publish(
+                    exchange='',
+                    routing_key=self.notification_queue,
+                    body=message,
+                    properties=pika.BasicProperties(
+                        delivery_mode=2,
+                    )
+                )
+                logger.info(f"Published drop notification for: {game.get('name')}")
+            except Exception as e:
+                logger.error(f"Failed to publish notification: {e}")
 
     def close(self):
         if self.connection and not self.connection.is_closed:

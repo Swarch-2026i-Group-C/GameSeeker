@@ -9,3 +9,4 @@ class Config:
     RABBITMQ_USER = os.getenv("RABBITMQ_USER", "guest")
     RABBITMQ_PASSWORD = os.getenv("RABBITMQ_PASSWORD", "guest")
     QUEUE_NAME = os.getenv("QUEUE_NAME", "game_prices_queue")
+    NOTIFICATION_QUEUE_NAME = os.getenv("NOTIFICATION_QUEUE_NAME", "notification_queue")

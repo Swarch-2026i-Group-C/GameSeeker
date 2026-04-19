@@ -27,5 +27,9 @@ export const wishlistService = {
         update.store
       )
     ));
+  },
+
+  getSubscribersForGames(gameNames: string[]) {
+    return wishlistRepository.getSubscribersForGames(gameNames);
   }
 };

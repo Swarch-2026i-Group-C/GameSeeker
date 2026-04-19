@@ -84,3 +84,22 @@ export const UpdateGamePricesSuccess = z
     message: z.string(),
   })
   .openapi("UpdateGamePricesSuccess");
+
+export const GetGameSubscribersSchema = z
+  .object({
+    gameNames: z.array(z.string()),
+  })
+  .openapi("GetGameSubscribersBody");
+
+export const SubscriberSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string(),
+});
+
+export const GetGameSubscribersSuccess = z
+  .object({
+    success: z.literal(true),
+    data: z.record(z.string(), z.array(SubscriberSchema)),
+  })
+  .openapi("GetGameSubscribersSuccess");

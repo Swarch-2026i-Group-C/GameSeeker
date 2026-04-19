@@ -35,3 +35,20 @@ class UserServiceClient:
                 logger.error(f"Failed to update wishlist prices. Status: {response.status_code}, Msg: {response.text}")
         except Exception as e:
             logger.error(f"Error communicating with user-service for PATCH prices: {e}")
+
+    def get_subscribers_for_games(self, game_names: List[str]) -> Dict[str, List[Dict[str, str]]]:
+        if not game_names:
+            return {}
+            
+        try:
+            payload = { "gameNames": game_names }
+            response = requests.post(f"{self.base_url}/wishlist/subscribers", json=payload, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                return data.get("data", {})
+            else:
+                logger.error(f"Failed to fetch game subscribers. Status: {response.status_code}, Msg: {response.text}")
+                return {}
+        except Exception as e:
+            logger.error(f"Error communicating with user-service for POST subscribers: {e}")
+            return {}

@@ -77,16 +77,38 @@ export const wishlistController = {
   async updateGamePrices(c: Context) {
     try {
       const body = await c.req.json();
-      const updates = body.updates;
-      if (!Array.isArray(updates)) {
-        return c.json({ success: false, message: "updates array is required" }, 400);
-      }
-      
+      const updates = body.updates || [];
       await wishlistService.updateGamePrices(updates);
-      return c.json({ success: true, message: "Prices updated successfully" }, 200);
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Error updating prices";
-      return c.json({ success: false, message }, 500);
+      
+      return c.json({
+        success: true as const,
+        message: "Prices updated successfully",
+      }, 200);
+    } catch (error) {
+      console.error(error);
+      return c.json({
+        success: false as const,
+        message: "Failed to update prices",
+      }, 500);
     }
-  }
+  },
+
+  async getSubscribers(c: Context) {
+    try {
+      const body = await c.req.json();
+      const gameNames = body.gameNames || [];
+      const subscribers = await wishlistService.getSubscribersForGames(gameNames);
+      
+      return c.json({
+        success: true as const,
+        data: subscribers,
+      }, 200);
+    } catch (error) {
+      console.error(error);
+      return c.json({
+        success: false as const,
+        message: "Failed to get subscribers",
+      }, 500);
+    }
+  },
 };

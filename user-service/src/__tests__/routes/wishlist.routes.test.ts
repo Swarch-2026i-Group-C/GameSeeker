@@ -11,6 +11,7 @@ vi.mock("../../services/wishlist.service.js", () => ({
     deleteGame: vi.fn(),
     getAllDistinctGames: vi.fn(),
     updateGamePrices: vi.fn(),
+    getSubscribersForGames: vi.fn(),
   },
 }));
 

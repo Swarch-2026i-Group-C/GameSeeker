@@ -9,6 +9,8 @@ import {
   GetDistinctGamesSuccess,
   UpdateGamePricesSchema,
   UpdateGamePricesSuccess,
+  GetGameSubscribersSchema,
+  GetGameSubscribersSuccess,
 } from "../schemas/wishlist.schema.js";
 
 const wishlistRoutes = new OpenAPIHono();
@@ -191,5 +193,29 @@ const updateGamePricesRoute = createRoute({
 });
 
 wishlistRoutes.openapi(updateGamePricesRoute, (c) => wishlistController.updateGamePrices(c));
+
+const getSubscribersRoute = createRoute({
+  method: "post",
+  path: "/subscribers",
+  tags: ["Wishlist"],
+  summary: "Get subscribers for specific games",
+  request: {
+    body: {
+      content: { "application/json": { schema: GetGameSubscribersSchema } },
+    },
+  },
+  responses: {
+    200: {
+      description: "Subscribers fetched successfully",
+      content: { "application/json": { schema: GetGameSubscribersSuccess } },
+    },
+    500: {
+      description: "Server error",
+      content: { "application/json": { schema: ErrorResponse } },
+    },
+  },
+});
+
+wishlistRoutes.openapi(getSubscribersRoute, (c) => wishlistController.getSubscribers(c));
 
 export default wishlistRoutes;

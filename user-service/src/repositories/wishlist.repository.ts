@@ -59,4 +59,35 @@ export const wishlistRepository = {
       },
     });
   },
+
+  async getSubscribersForGames(gameNames: string[]) {
+    const games = await prisma.game.findMany({
+      where: { gameName: { in: gameNames } },
+      include: {
+        wishlist: {
+          include: {
+            user: {
+              select: { id: true, name: true, email: true }
+            }
+          }
+        }
+      }
+    });
+
+    const result: Record<string, {id: string, name: string, email: string}[]> = {};
+    for (const name of gameNames) {
+      result[name] = [];
+    }
+
+    for (const game of games) {
+      if (game.wishlist && game.wishlist.user) {
+        // Ensure no duplicate users for the same game
+        if (!result[game.gameName].some(u => u.id === game.wishlist.user.id)) {
+          result[game.gameName].push(game.wishlist.user);
+        }
+      }
+    }
+
+    return result;
+  },
 };

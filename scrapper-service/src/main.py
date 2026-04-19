@@ -44,6 +44,12 @@ def run_wishlist_pipeline(producer):
         
     discounted_games = discount_service.process_discounts(all_games)
     if discounted_games:
+        game_names = [g["name"] for g in discounted_games]
+        subscribers = user_client.get_subscribers_for_games(game_names)
+        
+        for g in discounted_games:
+            g["subscribers"] = subscribers.get(g["name"], [])
+            
         logger.info(f"Found {len(discounted_games)} new discounts! Publishing to notification queue...")
         producer.publish_notification(discounted_games)
         

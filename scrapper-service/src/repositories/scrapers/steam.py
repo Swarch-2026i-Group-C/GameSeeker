@@ -55,6 +55,7 @@ class SteamScraper(BaseScraper):
                     "store": "Steam",
                     "name": item.get("name"),
                     "price_cents": item.get("final_price"),
+                    "original_price_cents": item.get("original_price", item.get("final_price")),
                     "currency": item.get("currency"),
                     "imageUrl": image_url,
                     "url": f"https://store.steampowered.com/app/{game_id}"
@@ -104,6 +105,7 @@ class SteamScraper(BaseScraper):
                 "store": "Steam",
                 "name": app_data.get("name", best.get("name")),
                 "price_cents": price_info.get("final", 0),
+                "original_price_cents": price_info.get("initial", price_info.get("final", 0)),
                 "imageUrl": image_url,
                 "currency": price_info.get("currency", "COP"),
                 "url": f"https://store.steampowered.com/app/{app_id}"

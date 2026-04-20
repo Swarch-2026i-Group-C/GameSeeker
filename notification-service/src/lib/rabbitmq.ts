@@ -27,7 +27,7 @@ export async function initRabbitMQ() {
         } catch (err) {
           console.error("[rabbitmq] Error processing message", err);
         }
-        channel!.ack(msg);
+        channel?.ack(msg);
       }
     });
 

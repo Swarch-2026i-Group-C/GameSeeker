@@ -81,7 +81,7 @@ services:
     ports:
       - "3001:3001"
     env_file:
-      - ./notification-service/.env  
+      - ./notification-service/.env
     environment:
       PORT: 3001
       RABBITMQ_HOST: rabbitmq
@@ -129,6 +129,7 @@ services:
       PORT: 8080
       USER_SERVICE_URL: http://user-service:4000
       SCRAPPER_SERVICE_URL: http://scrapper-service:5000
+      RANKING_SERVICE_URL: http://ranking-service:6001
       REDIS_URL: redis://redis:6379
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672

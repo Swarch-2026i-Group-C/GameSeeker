@@ -115,6 +115,26 @@ export interface Wishlist {
   games: WishlistGame[];
 }
 
+export interface RankedGame {
+  rank: number;
+  name: string;
+  slug: string;
+  store: string;
+  priceCents: number;
+  originalPriceCents: number;
+  currency: string;
+  discountPct: number;
+  url: string;
+  imageUrl?: string;
+}
+
+export interface RankingResponse {
+  generatedAt: string;
+  store: string;
+  count: number;
+  rankings: RankedGame[];
+}
+
 export interface AuthUser {
   id: string;
   name: string;
@@ -413,4 +433,21 @@ export async function removeFromWishlist(gameId: string): Promise<void> {
   return apiFetch<void>(`/api/wishlist/games/${gameId}`, {
     method: 'DELETE',
   });
+}
+
+// ---------------------------------------------------------------------------
+// Ranking endpoints (ranking-service via gateway)
+// ---------------------------------------------------------------------------
+
+/**
+ * Get the top discounted games across all stores or for a specific store.
+ * Maps to: GET /api/ranking/top
+ */
+export async function getRanking(store?: string, limit?: number): Promise<RankingResponse> {
+  const params = new URLSearchParams();
+  if (store) params.append('store', store);
+  if (limit) params.append('limit', limit.toString());
+  
+  const query = params.toString();
+  return apiFetch<RankingResponse>(`/api/ranking/top${query ? `?${query}` : ''}`);
 }

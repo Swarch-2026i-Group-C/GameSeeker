@@ -214,7 +214,7 @@ function GameCardList({ game, linkable = true, className }: Omit<GameCardProps, 
             </span>
           </div>
         )}
-      </className=>
+        </div>
 
       {/* Details */}
       <div className="flex min-w-0 flex-1 flex-col gap-1">

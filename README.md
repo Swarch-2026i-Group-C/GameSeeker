@@ -100,7 +100,7 @@ This section contains the formal architectural documentation required for the Pr
 
 **Deployment View**
 
-![Deployment View](./diagrams/GameSeeker_dev_env.png)
+![Deployment View](./diagrams/deployment.excalidraw.png)
 
 **Description of architectural elements and relations**
 - **local_infrastructure**: Represents the hardware and operating environment executing the stack.
@@ -114,7 +114,7 @@ This section contains the formal architectural documentation required for the Pr
 
 **Layered View**
 
-![Layered View](./diagrams/GameSeeker_layered_view.png)
+![Layered View](./diagrams/layered.excalidraw.png)
 
 **Description of architectural elements and relations**
 - **Client Tier**: Direct consumer hardware abstractions. Interacts with the `Orchestration` tier using verified paths.
@@ -129,7 +129,7 @@ This section contains the formal architectural documentation required for the Pr
 
 **Decomposition View**
 
-![Decomposition View](./diagrams/GameSeeker_system.png)
+![Decomposition View](./diagrams/decomposition.excalidraw.png)
 
 **Description of architectural elements and relations**
 - **Authentication Module**: Isolates Register and Login Sub-modules dynamically.

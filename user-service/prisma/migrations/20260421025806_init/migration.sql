@@ -75,6 +75,7 @@ CREATE TABLE "game" (
     "originalPriceCents" INTEGER,
     "currency" TEXT,
     "store" TEXT,
+    "imageUrl" TEXT,
 
     CONSTRAINT "game_pkey" PRIMARY KEY ("id")
 );

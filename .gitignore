@@ -1,4 +1,5 @@
 # Claude Code local settings
+.vscode/
 .claude/settings.local.json
 .claude/worktrees/
 .obsidian/

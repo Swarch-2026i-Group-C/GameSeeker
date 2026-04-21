@@ -5,8 +5,8 @@ export const wishlistService = {
     return wishlistRepository.findByUserId(userId);
   },
 
-  addGame(userId: string, gameId: string, gameName: string) {
-    return wishlistRepository.addGame(userId, gameId, gameName);
+  addGame(userId: string, gameId: string, gameName: string, imageUrl?: string) {
+    return wishlistRepository.addGame(userId, gameId, gameName, imageUrl);
   },
 
   deleteGame(id: string) {
@@ -24,6 +24,7 @@ export const wishlistService = {
       originalPriceCents: number | null;
       currency: string | null;
       store: string | null;
+      imageUrl?: string | null;
     }>,
   ) {
     return Promise.all(
@@ -34,6 +35,7 @@ export const wishlistService = {
           update.originalPriceCents,
           update.currency,
           update.store,
+          update.imageUrl,
         ),
       ),
     );

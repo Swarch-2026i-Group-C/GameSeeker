@@ -31,7 +31,7 @@ app.use(
       return allowedOrigins.includes(origin) ? origin : "";
     },
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization", "Cookie"],
+    allowHeaders: ["Content-Type", "Authorization", "Cookie", "Idempotency-Key"],
     credentials: true,
   }),
 );

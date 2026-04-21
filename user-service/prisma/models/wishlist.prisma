@@ -18,6 +18,7 @@ model Game {
   originalPriceCents Int?
   currency           String?
   store              String?
+  imageUrl           String?
 
   wishlist Wishlist @relation(fields: [wishlistId], references: [userId], onDelete: Cascade)
 

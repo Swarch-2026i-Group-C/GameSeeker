@@ -91,6 +91,14 @@ const addGameRoute = createRoute({
         },
       },
     },
+    409: {
+      description: "Game already in wishlist",
+      content: {
+        "application/json": {
+          schema: ErrorResponse,
+        },
+      },
+    },
     500: {
       description: "Internal server error",
       content: {

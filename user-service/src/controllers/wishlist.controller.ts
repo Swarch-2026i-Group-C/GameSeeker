@@ -21,12 +21,12 @@ export const wishlistController = {
   async addGame(c: Context) {
     try {
       const body = await c.req.json();
-      const { userId, gameId, gameName } = body as {
+      const { userId, gameId, gameName, imageUrl } = body as {
         userId?: string;
         gameId?: string;
         gameName?: string;
+        imageUrl?: string;
       };
-
       if (!userId || !gameId || !gameName) {
         return c.json(
           {
@@ -37,7 +37,10 @@ export const wishlistController = {
         );
       }
 
-      const item = await wishlistService.addGame(userId, gameId, gameName);
+      const item = await wishlistService.addGame(userId, gameId, gameName, imageUrl);
+      if (!item) {
+        return c.json({ success: false, message: "Game already in wishlist" }, 409);
+      }
       return c.json({ success: true, data: item }, 201);
     } catch (error: unknown) {
       const message =

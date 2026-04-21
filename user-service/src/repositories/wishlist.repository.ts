@@ -12,18 +12,32 @@ export const wishlistRepository = {
     });
   },
 
-  async addGame(userId: string, gameId: string, gameName: string) {
+  async addGame(userId: string, gameId: string, gameName: string, imageUrl?: string) {
     await prisma.wishlist.upsert({
       where: { userId },
       create: { userId },
       update: {},
     });
 
+    // Verifica si el juego ya está en la wishlist
+    const existing = await prisma.game.findFirst({
+      where: {
+        wishlistId: userId,
+        gameId,
+      },
+    });
+    if (existing) {
+      // Si ya existe, retorna null para que el controlador devuelva 409
+      return null;
+    }
+
+    // Si no existe, lo crea
     return prisma.game.create({
       data: {
         wishlistId: userId,
         gameId,
         gameName,
+        imageUrl: imageUrl ?? null,
       },
     });
   },
@@ -48,6 +62,7 @@ export const wishlistRepository = {
     originalPriceCents: number | null,
     currency: string | null,
     store: string | null,
+    imageUrl?: string | null,
   ) {
     return prisma.game.updateMany({
       where: { gameName },
@@ -56,6 +71,7 @@ export const wishlistRepository = {
         originalPriceCents,
         currency,
         store,
+        imageUrl: imageUrl ?? null,
       },
     });
   },

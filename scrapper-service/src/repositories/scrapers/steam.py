@@ -107,6 +107,7 @@ class SteamScraper(BaseScraper):
                 "price_cents": price_info.get("final", 0),
                 "original_price_cents": price_info.get("initial", price_info.get("final", 0)),
                 "imageUrl": image_url,
+                "original_price_cents": price_info.get("initial", price_info.get("final", 0)),
                 "currency": price_info.get("currency", "COP"),
                 "url": f"https://store.steampowered.com/app/{app_id}"
             }

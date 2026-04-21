@@ -116,7 +116,7 @@ function GameCardGrid({ game, linkable = true, className }: Omit<GameCardProps, 
       )}
     >
       {/* Cover image — 3:4 aspect ratio like a game case */}
-      <div className="relative aspect-[3/4] w-full overflow-hidden bg-surface-container">
+      <div className="relative aspect-[2/1] w-full overflow-hidden bg-surface-container">
         {game.coverImage ? (
           <Image
             src={game.coverImage}
@@ -196,7 +196,7 @@ function GameCardList({ game, linkable = true, className }: Omit<GameCardProps, 
     >
       {/* Thumbnail */}
       <div
-        className="relative h-16 w-12 shrink-0 overflow-hidden rounded-xl"
+        className="relative h-12 w-20 shrink-0 overflow-hidden rounded-xl"
         style={{ background: 'linear-gradient(160deg, #221816 0%, #2e2220 100%)' }}
       >
         {game.coverImage ? (

@@ -5,6 +5,7 @@ export const AddGameSchema = z
     userId: z.string(),
     gameId: z.string(),
     gameName: z.string(),
+    imageUrl: z.string().url().nullable().optional(),
   })
   .openapi("AddGameBody");
 
@@ -18,6 +19,7 @@ export const GameSchema = z
     originalPriceCents: z.number().nullable().optional(),
     currency: z.string().nullable().optional(),
     store: z.string().nullable().optional(),
+    imageUrl: z.string().url().nullable().optional(),
   })
   .openapi("Game");
 
@@ -70,6 +72,7 @@ export const GamePriceUpdateSchema = z.object({
   originalPriceCents: z.number().nullable(),
   currency: z.string().nullable(),
   store: z.string().nullable(),
+  imageUrl: z.string().url().nullable().optional(),
 });
 
 export const UpdateGamePricesSchema = z

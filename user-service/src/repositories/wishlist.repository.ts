@@ -12,7 +12,7 @@ export const wishlistRepository = {
     });
   },
 
-  async addGame(userId: string, gameId: string, gameName: string) {
+  async addGame(userId: string, gameId: string, gameName: string, imageUrl?: string) {
     await prisma.wishlist.upsert({
       where: { userId },
       create: { userId },
@@ -24,6 +24,7 @@ export const wishlistRepository = {
         wishlistId: userId,
         gameId,
         gameName,
+        imageUrl: imageUrl ?? null,
       },
     });
   },
@@ -48,6 +49,7 @@ export const wishlistRepository = {
     originalPriceCents: number | null,
     currency: string | null,
     store: string | null,
+    imageUrl?: string | null,
   ) {
     return prisma.game.updateMany({
       where: { gameName },
@@ -56,6 +58,7 @@ export const wishlistRepository = {
         originalPriceCents,
         currency,
         store,
+        imageUrl: imageUrl ?? null,
       },
     });
   },

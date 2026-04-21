@@ -1,12 +1,12 @@
 import logging
 from typing import List, Dict, Any
-from repositories.database.sqlite_repo import SQLiteRepo
+from repositories.database.postgres_repo import PostgresRepo
 
 logger = logging.getLogger(__name__)
 
 class DiscountService:
     def __init__(self):
-        self.sqlite_repo = SQLiteRepo()
+        self.db_repo = PostgresRepo()
 
     def process_discounts(self, games: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
@@ -29,9 +29,9 @@ class DiscountService:
             target_discount_price = original_price * 0.90
 
             if current_price <= target_discount_price:
-                if not self.sqlite_repo.has_been_notified(name, store, current_price):
+                if not self.db_repo.has_been_notified(name, store, current_price):
                     notifiable_discounts.append(game)
-                    self.sqlite_repo.save_notification(name, store, current_price)
+                    self.db_repo.save_notification(name, store, current_price)
                     logger.info(f"New discount detected for {name} on {store}: {current_price} cents (Original: {original_price} cents)")
                 else:
                     logger.debug(f"Discount for {name} on {store} at {current_price} cents already notified.")

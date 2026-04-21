@@ -11,6 +11,7 @@ services:
       - PYTHONUNBUFFERED=1
       - SCRAPPER_LOOP_INTERVAL_MINUTES=2
       - USER_SERVICE_URL=http://user-service:4000
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/postgres
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
       - RABBITMQ_USER=guest

@@ -1,12 +1,10 @@
 import { Hono } from "hono";
 import { requireAuth } from "../middleware/auth.js";
-import { idempotency } from "../middleware/idempotency.js";
 import { env } from "../lib/env.js";
 
 const wishlist = new Hono<{ Variables: { userId: string } }>();
 
 wishlist.use("/*", requireAuth);
-wishlist.use("/games", idempotency);
 
 /**
  * GET /api/wishlist → GET /wishlist?userId=<userId>

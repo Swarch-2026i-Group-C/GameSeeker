@@ -427,9 +427,6 @@ export async function addToWishlist(gameData: {
     '/api/wishlist/games',
     {
       method: 'POST',
-      headers: {
-      'Idempotency-Key': `${gameData.slug}-${Date.now()}`,
-      },
       body: JSON.stringify({
         name: gameData.name,
         slug: gameData.slug,

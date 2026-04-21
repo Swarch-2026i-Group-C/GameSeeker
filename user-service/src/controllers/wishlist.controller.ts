@@ -38,6 +38,9 @@ export const wishlistController = {
       }
 
       const item = await wishlistService.addGame(userId, gameId, gameName, imageUrl);
+      if (!item) {
+        return c.json({ success: false, message: "Game already in wishlist" }, 409);
+      }
       return c.json({ success: true, data: item }, 201);
     } catch (error: unknown) {
       const message =

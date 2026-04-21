@@ -19,6 +19,19 @@ export const wishlistRepository = {
       update: {},
     });
 
+    // Verifica si el juego ya está en la wishlist
+    const existing = await prisma.game.findFirst({
+      where: {
+        wishlistId: userId,
+        gameId,
+      },
+    });
+    if (existing) {
+      // Si ya existe, retorna null para que el controlador devuelva 409
+      return null;
+    }
+
+    // Si no existe, lo crea
     return prisma.game.create({
       data: {
         wishlistId: userId,

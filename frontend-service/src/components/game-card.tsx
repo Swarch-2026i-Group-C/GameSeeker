@@ -196,7 +196,7 @@ function GameCardList({ game, linkable = true, className }: Omit<GameCardProps, 
     >
       {/* Thumbnail */}
       <div
-        className="relative h-12 w-20 shrink-0 overflow-hidden rounded-xl"
+        className="relative h-16 w-12 shrink-0 overflow-hidden rounded-xl"
         style={{ background: 'linear-gradient(160deg, #221816 0%, #2e2220 100%)' }}
       >
         {game.coverImage ? (
@@ -214,7 +214,7 @@ function GameCardList({ game, linkable = true, className }: Omit<GameCardProps, 
             </span>
           </div>
         )}
-      </div>
+      </className=>
 
       {/* Details */}
       <div className="flex min-w-0 flex-1 flex-col gap-1">

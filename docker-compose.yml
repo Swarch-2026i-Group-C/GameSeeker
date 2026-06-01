@@ -4,8 +4,8 @@ services:
       context: ./scrapper-service
       dockerfile: Dockerfile
     container_name: scrapper-service
-    ports:
-      - "5010:5000"
+#    ports:
+#      - "5010:5000"
     environment:
       - FLASK_ENV=production
       - PYTHONUNBUFFERED=1
@@ -26,8 +26,8 @@ services:
     build:
       context: ./user-service
     container_name: user-service
-    ports:
-      - "4000:4000"
+#    ports:
+#      - "4000:4000"
     env_file:
       - ./user-service/.env
     environment:
@@ -47,8 +47,8 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: users_db
-    ports:
-      - "5433:5432"
+#    ports:
+#      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -57,9 +57,9 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
-    ports:
-      - "5672:5672"
-      - "15672:15672"
+#    ports:
+#      - "5672:5672"
+#      - "15672:15672"
     environment:
       - RABBITMQ_DEFAULT_USER=guest
       - RABBITMQ_DEFAULT_PASS=guest
@@ -79,8 +79,8 @@ services:
       context: ./notification-service
       dockerfile: Dockerfile
     container_name: notification-service
-    ports:
-      - "3001:3001"
+#    ports:
+#      - "3001:3001"
     env_file:
       - ./notification-service/.env
     environment:
@@ -101,8 +101,8 @@ services:
       context: ./ranking-service
       dockerfile: Dockerfile
     container_name: ranking-service
-    ports:
-      - "6001:6001"
+#    ports:
+#      - "6001:6001"
     environment:
       SERVER_PORT: 6001
       REDIS_HOST: redis
@@ -124,8 +124,8 @@ services:
       context: ./gateway-service
       dockerfile: Dockerfile
     container_name: gateway-service
-    ports:
-      - "8080:8080"
+#    ports:
+#      - "8080:8080"
     environment:
       PORT: 8080
       USER_SERVICE_URL: http://user-service:4000
@@ -150,15 +150,32 @@ services:
     build:
       context: ./frontend-service
       dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
+#    ports:
+#      - "3000:3000"
     environment:
-      GATEWAY_URL: http://gateway-service:8080
-      NEXT_PUBLIC_GATEWAY_URL: http://localhost:8080
+      - GATEWAY_URL=http://gateway-service:8080
+      - NEXT_PUBLIC_GATEWAY_URL=http://localhost:8080
     depends_on:
       - gateway-service
     networks:
       - app-network
+
+  reverse-proxy:
+    build:
+      context: ./reverse-proxy
+      dockerfile: Dockerfile
+    container_name: reverse-proxy
+    ports:
+      - "8080:8000"
+    environment:
+      - GATEWAY_URL=http://gateway-service:8080
+      - FRONTEND_URL=http://frontend-service:3000
+    depends_on:
+      - gateway-service
+      - frontend-service
+    networks:
+      - app-network
+    restart: unless-stopped
 
 networks:
   app-network:

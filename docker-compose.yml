@@ -31,7 +31,7 @@ services:
     env_file:
       - ./user-service/.env
     environment:
-      BETTER_AUTH_URL: http://localhost:4000
+      BETTER_AUTH_URL: https://localhost:8443/api/auth
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/users_db
     depends_on:
       - postgres
@@ -137,6 +137,7 @@ services:
       RABBITMQ_USER: guest
       RABBITMQ_PASSWORD: guest
       RABBITMQ_QUEUE: game_prices_queue
+      GATEWAY_AUTH_ORIGIN: https://localhost:8443
     depends_on:
       - user-service
       - scrapper-service
@@ -150,11 +151,13 @@ services:
     build:
       context: ./frontend-service
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_GATEWAY_URL=https://localhost:8443
 #    ports:
 #      - "3000:3000"
     environment:
       - GATEWAY_URL=http://gateway-service:8080
-      - NEXT_PUBLIC_GATEWAY_URL=http://localhost:8080
+      - NEXT_PUBLIC_GATEWAY_URL=https://localhost:8443
     depends_on:
       - gateway-service
     networks:
@@ -166,13 +169,15 @@ services:
       dockerfile: Dockerfile
     container_name: reverse-proxy
     ports:
-      - "8080:8000"
+      - "8443:8000"
     environment:
       - GATEWAY_URL=http://gateway-service:8080
       - FRONTEND_URL=http://frontend-service:3000
     depends_on:
       - gateway-service
       - frontend-service
+    volumes:
+      - certs-data:/app/certs
     networks:
       - app-network
     restart: unless-stopped
@@ -183,3 +188,4 @@ networks:
 
 volumes:
   postgres_data:
+  certs-data:

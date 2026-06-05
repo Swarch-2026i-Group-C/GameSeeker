@@ -177,6 +177,7 @@ services:
       RABBITMQ_USER: guest
       RABBITMQ_PASSWORD: guest
       RABBITMQ_QUEUE: game_prices_queue
+      #RATE_LIMIT_ENABLED: "false"
     depends_on:
       - user-service
       - scrapper-lb

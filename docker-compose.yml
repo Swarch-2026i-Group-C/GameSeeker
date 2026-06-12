@@ -1,23 +1,63 @@
 services:
-  scrapper-service:
+  scrapper-lb:
+    build:
+      context: ./performance-scalability/load-balancer
+      dockerfile: Dockerfile.balancer
+    container_name: scrapper-lb
+    ports:
+      - "5010:8080"
+    environment:
+      - LB_ALGORITHM=least_connections
+    depends_on:
+      - scrapper-service-1
+      - scrapper-service-2
+      - scrapper-service-3
+    networks:
+      - app-network
+
+  scrapper-service-1:
     build:
       context: ./scrapper-service
       dockerfile: Dockerfile
-    container_name: scrapper-service
-#    ports:
-#      - "5010:5000"
-    environment:
-      - FLASK_ENV=production
-      - PYTHONUNBUFFERED=1
-      - SCRAPPER_LOOP_INTERVAL_MINUTES=2
-      - USER_SERVICE_URL=http://user-service:4000
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/postgres
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_USER=guest
-      - RABBITMQ_PASSWORD=guest
+    environment: &scrapper-env
+      FLASK_ENV: production
+      PYTHONUNBUFFERED: "1"
+      SCRAPPER_LOOP_INTERVAL_MINUTES: "2"
+      USER_SERVICE_URL: http://user-service:4000
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/postgres
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
     depends_on:
       - rabbitmq
+      - postgres
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  scrapper-service-2:
+    build:
+      context: ./scrapper-service
+      dockerfile: Dockerfile
+    environment:
+      <<: *scrapper-env
+    depends_on:
+      - rabbitmq
+      - postgres
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  scrapper-service-3:
+    build:
+      context: ./scrapper-service
+      dockerfile: Dockerfile
+    environment:
+      <<: *scrapper-env
+    depends_on:
+      - rabbitmq
+      - postgres
     networks:
       - app-network
     restart: unless-stopped
@@ -176,8 +216,9 @@ services:
     environment:
       PORT: 8080
       USER_SERVICE_URL: http://user-service:4000
-      SCRAPPER_SERVICE_URL: http://scrapper-service:5000
-      # Ranking reads go through the hot-spare coordinator, not a single node.
+      # Scrapper requests go through the load balancer (performance lab).
+      SCRAPPER_SERVICE_URL: http://scrapper-lb:8080
+      # Ranking reads go through the hot-spare coordinator, not a single node (reliability lab).
       RANKING_SERVICE_URL: http://ranking-coordinator:6001
       REDIS_URL: redis://redis:6379
       RABBITMQ_HOST: rabbitmq
@@ -186,9 +227,10 @@ services:
       RABBITMQ_PASSWORD: guest
       RABBITMQ_QUEUE: game_prices_queue
       GATEWAY_AUTH_ORIGIN: https://localhost:8443
+      #RATE_LIMIT_ENABLED: "false"
     depends_on:
       - user-service
-      - scrapper-service
+      - scrapper-lb
       - redis
       - rabbitmq
     networks:

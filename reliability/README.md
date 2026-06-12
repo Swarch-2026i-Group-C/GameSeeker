@@ -35,15 +35,15 @@ flowchart TB
 
     subgraph cluster["Kubernetes cluster (minikube: swarch-cluster)"]
         subgraph node["Node"]
-            svc["Service: gateway-service\n(ClusterIP+NodePort, selector app=gateway-service)"]
+            svc["Service: gateway-service<br/>(ClusterIP+NodePort, selector app=gateway-service)"]
             subgraph deploy["Deployment: gateway-service (replicas=2)"]
-                p1["Pod: gateway-service-xxxx\ncontainer :8080\nliveness/readiness /health"]
-                p2["Pod: gateway-service-yyyy\ncontainer :8080\nliveness/readiness /health"]
+                p1["Pod: gateway-service-xxxx<br/>container :8080<br/>liveness/readiness /health"]
+                p2["Pod: gateway-service-yyyy<br/>container :8080<br/>liveness/readiness /health"]
             end
             svc --> p1
             svc --> p2
         end
-        cp["Control plane\n(scheduler + controller-manager)\nreconciles replicas, restarts failed Pods"]
+        cp["Control plane<br/>(scheduler + controller-manager)<br/>reconciles replicas, restarts failed Pods"]
         cp -. manages .-> deploy
     end
 ```
@@ -62,15 +62,15 @@ active, and promotes the spare the instant the active fails.
 
 ```mermaid
 flowchart LR
-    scrapper["scrapper-service\n(price publisher)"] -->|publish| ex(("fanout exchange\nranking_prices_exchange"))
-    ex -->|copy| qa["queue\nranking_prices_active"]
-    ex -->|copy| qs["queue\nranking_prices_spare"]
-    qa --> active["ranking-active\n(ACTIVE)"]
-    qs --> spare["ranking-spare\n(HOT SPARE)"]
-    active --> redis[("shared Redis\nleaderboard state")]
+    scrapper["scrapper-service<br/>(price publisher)"] -->|publish| ex(("fanout exchange<br/>ranking_prices_exchange"))
+    ex -->|copy| qa["queue<br/>ranking_prices_active"]
+    ex -->|copy| qs["queue<br/>ranking_prices_spare"]
+    qa --> active["ranking-active<br/>(ACTIVE)"]
+    qs --> spare["ranking-spare<br/>(HOT SPARE)"]
+    active --> redis[("shared Redis<br/>leaderboard state")]
     spare --> redis
 
-    gateway["gateway-service"] -->|/api/ranking/*| coord["ranking-coordinator\n(health-check + router\n+ promotion)"]
+    gateway["gateway-service"] -->|/api/ranking/*| coord["ranking-coordinator<br/>(health-check + router<br/>+ promotion)"]
     coord -. health probe .-> active
     coord -. health probe .-> spare
     coord -->|reads from primary| active

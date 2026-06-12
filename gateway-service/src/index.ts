@@ -1,4 +1,5 @@
 import "dotenv/config";
+import os from "node:os";
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -43,7 +44,15 @@ app.use("*", logger());
 // ---------------------------------------------------------------------------
 
 app.get("/health", (c) => {
-  return c.json({ status: "ok", service: "gateway" });
+  // `instance` exposes the hostname of the serving process. Inside Kubernetes
+  // this is the Pod name, which makes load-balancing across replicas directly
+  // observable (each request may be answered by a different Pod) and is used by
+  // the liveness/readiness probes defined in k8s/gateway-deployment.yaml.
+  return c.json({
+    status: "ok",
+    service: "gateway",
+    instance: os.hostname(),
+  });
 });
 
 // ---------------------------------------------------------------------------

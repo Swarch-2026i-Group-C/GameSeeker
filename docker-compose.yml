@@ -96,13 +96,16 @@ services:
       - app-network
     restart: unless-stopped
 
-  ranking-service:
+  # --- Ranking hot-spare protection group (Reliability Lab 6, Part B) ---------
+  # active + spare both consume every price event from the ranking fanout
+  # exchange and share Redis, so their leaderboards stay identical. The
+  # coordinator routes reads to the active and promotes the spare on failure.
+  ranking-active:
     build:
       context: ./ranking-service
       dockerfile: Dockerfile
-    container_name: ranking-service
-#    ports:
-#      - "6001:6001"
+    image: gameseeker/ranking-service:lab6
+    container_name: ranking-active
     environment:
       SERVER_PORT: 6001
       REDIS_HOST: redis
@@ -111,10 +114,54 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USER: guest
       RABBITMQ_PASSWORD: guest
-      RABBITMQ_RANKING_QUEUE: ranking_prices_queue
+      RANKING_EXCHANGE: ranking_prices_exchange
+      RANKING_INSTANCE_ID: active
+      RANKING_INSTANCE_QUEUE: ranking_prices_active
     depends_on:
       - redis
       - rabbitmq
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  ranking-spare:
+    image: gameseeker/ranking-service:lab6   # same image as active
+    container_name: ranking-spare
+    environment:
+      SERVER_PORT: 6001
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      RANKING_EXCHANGE: ranking_prices_exchange
+      RANKING_INSTANCE_ID: spare
+      RANKING_INSTANCE_QUEUE: ranking_prices_spare
+    depends_on:
+      - redis
+      - rabbitmq
+      - ranking-active
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  ranking-coordinator:
+    build:
+      context: ./reliability/ranking-coordinator
+      dockerfile: Dockerfile
+    container_name: ranking-coordinator
+#    ports:
+#      - "6010:6001"
+    environment:
+      RANKING_ACTIVE_URL: http://ranking-active:6001
+      RANKING_SPARE_URL: http://ranking-spare:6001
+      HEALTH_INTERVAL_SECONDS: "0.25"
+      FAIL_THRESHOLD: "2"
+      FAILBACK: "true"
+    depends_on:
+      - ranking-active
+      - ranking-spare
     networks:
       - app-network
     restart: unless-stopped
@@ -130,7 +177,8 @@ services:
       PORT: 8080
       USER_SERVICE_URL: http://user-service:4000
       SCRAPPER_SERVICE_URL: http://scrapper-service:5000
-      RANKING_SERVICE_URL: http://ranking-service:6001
+      # Ranking reads go through the hot-spare coordinator, not a single node.
+      RANKING_SERVICE_URL: http://ranking-coordinator:6001
       REDIS_URL: redis://redis:6379
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672

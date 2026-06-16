@@ -1,5 +1,4 @@
 <div align="center">
-  <!-- SPACE FOR LOGO -->
   <h1>GameSeeker</h1>
   <p><i>A unified platform to discover and track gaming deals across the digital landscape.</i></p>
 </div>
@@ -140,6 +139,60 @@ This section contains the formal architectural documentation required for the Pr
 
 ---
 
+## 5. Quality Attributes
+
+### 5.1. Security
+
+#### Security Scenarios
+
+| Attribute | Scenario 1: Direct Service Access & Traffic Interception |
+|---|---|
+| **Source** | External (attacker or malicious user) |
+| **Stimulus** | An attacker attempts to directly access internal microservice ports or intercept network traffic between the client and the server to read sensitive data (e.g., credentials or session tokens). |
+| **Artifact** | Application communication network and exposed ports. |
+| **Environment** | The system is under normal operation when the stimulus occurs. |
+| **Response** | The system exposes only the Reverse Proxy port, rejecting any direct connection attempt to underlying services. Simultaneously, the communication channel enforces TLS encryption, preventing any reading or modification of data packets in transit. |
+| **Response Measure** | 100% of direct connection attempts to internal ports from the host are denied (`Connection Refused`), and 100% of external client-server communication is successfully encrypted over HTTPS. |
+
+| Attribute | Scenario 2: Malicious Header Injection |
+|---|---|
+| **Source** | External (attacker crafting a malicious HTTP request) |
+| **Stimulus** | An attacker sends a request with a forged or injected `Host` header attempting to manipulate internal routing logic, bypass access controls, or trigger unintended behavior in backend services. |
+| **Artifact** | The HTTP request pipeline between the client and the `gateway-service`. |
+| **Environment** | The system is under normal operation when the stimulus occurs. |
+| **Response** | The `reverse-proxy` intercepts all inbound requests, strips the `Host` header before forwarding, and routes the sanitized request to the appropriate internal service. Backend services never receive raw, unfiltered client headers. |
+| **Response Measure** | 100% of inbound requests have their `Host` header removed by the proxy before reaching any internal microservice, neutralizing host-header injection as an attack vector. |
+
+---
+
+#### Applied Architectural Tactics
+
+- **Limit Access (Resist Attack):** All internal microservice ports and database ports are unexposed at the Docker host level. The only externally reachable port is `8443`, mapped to the `reverse-proxy` container. Direct `curl` attempts to internal service ports (e.g., `http://localhost:4000/`) result in `Connection Refused`.
+
+- **Encrypt Data (Detect Attacks):** TLS/SSL termination is handled at the `reverse-proxy` boundary via self-signed certificates generated with `openssl` (RSA 4096-bit). The `uvicorn` server boots with `--ssl-keyfile` and `--ssl-certfile` flags, ensuring all external traffic is encrypted. Internal container-to-container communication operates over plain HTTP within the isolated Docker network, avoiding unnecessary certificate management overhead.
+
+- **Authenticate Actors:** Session tokens (e.g., `better-auth.session_token`) are transmitted exclusively over the encrypted HTTPS channel, reducing the risk of token theft via network interception. Trusted CORS origins are explicitly scoped to `https://localhost:8443` in both `gateway-service` and `user-service`.
+
+- **Sanitize Input:** The `reverse-proxy` strips the `Host` header from all incoming requests before forwarding them downstream, preventing host-header injection attacks against internal routing logic.
+
+---
+
+#### Applied Architectural Patterns
+
+- **Reverse Proxy:** An intermediary `reverse-proxy` service (implemented in FastAPI) acts as the sole entry point to the system. It intercepts all external requests, captures client IPs, removes malicious headers, and routes traffic to the appropriate internal service (`gateway-service` or `frontend-service`). The internal topology and ports of all microservices remain completely hidden from the outside network.
+
+- **Secure Channel (HTTPS/TLS):** The `reverse-proxy` acts as the SSL termination point for the entire system. A `start.sh` initialization script automatically generates self-signed TLS certificates using `openssl` on first boot, and a Docker volume (`certs-data`) persists them across container restarts. This pattern guarantees confidentiality and integrity of data in transit — any attacker intercepting the external network sees only ciphertext. Internal traffic between the proxy and microservices runs over plain HTTP within the isolated `app-network`, avoiding redundant encryption overhead.
+
+> **Implementation note:** The two patterns are applied in tandem by design. The Reverse Proxy alone would leave the external Client ↔ Proxy leg vulnerable to interception. Layering the Secure Channel on top converts the proxy into the SSL termination point, securing external traffic while keeping the internal Docker network lightweight.
+
+### 5.2. Performance and Scalability
+
+### 5.3. Reliability
+
+### 5.4. Interoperability
+
+---
+
 ## 5. Prototype
 
 **Instructions for deploying the software system locally.**
@@ -157,10 +210,10 @@ To lift the GameSeeker prototype distributed architecture locally, you will need
     ```bash
     docker-compose up --build -d
     ```
-4. Docker will initialize the network sequence, launching data persistence nodes (`postgres, rabbitmq, redis`) concurrently followed by core application logic nodes via the Dockerfile maps. Look out for these bindings locally:
-    * **Main UI Environment:** `http://localhost:3000`
-    * **Core Gateway Router:** `http://localhost:8080`
-    * **RabbitMQ Management Portal:** `http://localhost:15672`
+4. Docker will initialize the network sequence, launching data persistence nodes (`postgres, rabbitmq, redis`) concurrently followed by core application logic nodes via the Dockerfile maps. All external traffic is routed through a single entry point:
+    * **Application Entry Point (Reverse Proxy):** `https://localhost:8443`
+
+> **⚠️ Important — Self-Signed Certificate Warning:** Since the system uses a locally generated self-signed TLS certificate, your browser will display a security warning (e.g., `ERR_CERT_AUTHORITY_INVALID` in Chrome, or "Your connection is not private" in other browsers) when first accessing `https://localhost:8443`. This is expected behavior in a local development environment. To proceed, click **"Advanced"** and then **"Continue to localhost (unsafe)"** (or the equivalent option in your browser). You will only need to do this once per browser session.    
 5. After tests successfully finish, clean up the subnets safely from memory overhead:
     ```bash
     docker-compose down

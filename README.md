@@ -191,7 +191,30 @@ This section contains the formal architectural documentation required for the Pr
 
 ### 5.4. Interoperability
 
+#### Interoperability Scenarios
+
+| Attribute | Scenario 1: External Data Extraction and Integration |
+|---|---|
+| **Source** | Internal system timer (Scheduled Poll) |
+| **Stimulus** | The system needs to retrieve, parse, and normalize game prices from external digital stores (Steam, Epic Games, GOG, Microsoft Store) whose data structures are completely distinct and out of our control. |
+| **Artifact** | `scrapper-service` and its integration with `RabbitMQ`. |
+| **Environment** | The system is under normal operation when the stimulus occurs. |
+| **Response** | The `scrapper-service` queries the external platforms, extracts the data, handles format discrepancies using an Anti-Corruption Layer, transforms the heterogeneous data into our canonical internal domain model, and publishes the standardized data to `RabbitMQ` asynchronously. |
+| **Response Measure** | 100% of the successfully scraped data is normalized to the internal schema before being pushed to the internal queues, effectively shielding all internal services (Gateway, Ranking) from external HTML/API changes. |
+
 ---
+
+#### Applied Architectural Tactics
+
+- **Asynchronous Messaging (Choreography):** The system relies on `RabbitMQ` to decouple the external interaction from the internal operation. Instead of forcing internal microservices to wait for slow HTTP requests to third-party stores, the scrapper obtains data at its own pace and publishes it as events (`game_prices_queue`, `ranking_prices_exchange`).
+- **Polling (Scheduled Job):** Since external stores do not proactively notify our system of price changes, the `scrapper-service` implements an active polling mechanism (`SCRAPPER_LOOP_INTERVAL_MINUTES`). This tactic ensures that our internal data remains continuously synchronized with the external state without requiring direct integration from the external providers.
+
+---
+
+#### Applied Architectural Patterns
+
+- **Anti-Corruption Layer (ACL):** The `scrapper-service` acts as an isolating barrier. It prevents the complex, inconsistent, or undocumented data models of external digital stores from leaking into our system. It translates external data (raw HTML from Steam or JSON from Epic) into our internal, standardized Game and Price objects before they reach the rest of the application.
+- **Adapter / Wrapper Pattern:** Within the `scrapper-service` module, specific adapter engines are implemented for each external store (e.g., Steam Scraper, GOG Scraper). These wrappers encapsulate the specific logic and endpoints required to interact with each store, exposing a unified scraping interface to the main scrapper loop.
 
 ## 5. Prototype
 
